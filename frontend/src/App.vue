@@ -12,7 +12,7 @@
             <Table v-on:row-clicked="selectpaper"/>
           </b-col>
           <b-col>
-            <Paper v-if="this.currentpid != null":pid="currentpid" />
+            <Paper v-if="currentpid != null" :pid="currentpid" />
           </b-col>
       </b-row>
   </b-container>

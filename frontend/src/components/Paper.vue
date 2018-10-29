@@ -6,7 +6,7 @@
     <taglist v-model="authors" />
   	Tags:
     <taglist v-model="tags" />
-    <button>Save</button>
+    <button @click="save()">Save</button>
   </div>
 </template>
 
@@ -43,7 +43,12 @@ export default {
 							   this.authors = response.data[1].map(x=>x.name),
 							   this.tags = response.data[2].map(x=>x.name))
 			)
-  	}
+  	}, 
+    save: function() {
+      axios
+      .put('http://localhost:8000/editpaper', 
+        JSON.stringify({pid: this.pid, tags: this.tags}))
+    }
   }
 }
 </script>

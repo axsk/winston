@@ -1,18 +1,19 @@
 <template>
   <div id="app">
-    <b-container>
+    <b-container fluid>
       <b-row>
-          <b-col>
-            Search<br>
-            <input><br>
-            Filter tags:<br>
-            Filter date:<br>
+          <b-col cols=2>
+            <div class="sticky-top">
+              <Search />
+            </div>
           </b-col>
-          <b-col>
+          <b-col cols="7">
             <Table v-on:row-clicked="selectpaper"/>
           </b-col>
-          <b-col>
-            <Paper v-if="currentpid != null" :pid="currentpid" />
+          <b-col cols=3>
+            <div class="sticky-top">
+              <Paper v-if="currentpid != null" :pid="currentpid" />
+            </div>
           </b-col>
       </b-row>
   </b-container>
@@ -22,12 +23,15 @@
 <script>
 import Table from './components/Table.vue'
 import Paper from './components/Paper.vue'
+import Search from './components/Search.vue'
+import axios from 'axios'
 
 export default {
   name: 'app',
   components: {
     Table,
-    Paper
+    Paper,
+    Search
   },
   data () { 
     return {
@@ -37,6 +41,11 @@ export default {
   methods: {
     selectpaper(pid) {
       this.currentpid = pid
+    },
+    getusertags(user) {
+      let tags = axios.get('http://localhost:8000/usertags/'+user);
+      alert(JSON.stringify(tags["data"]))
+      return tags["data"]
     }
   }
 }
@@ -49,6 +58,6 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: left;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 20px;
 }
 </style>

@@ -1,11 +1,11 @@
 <template>
   <div>
-  	<input :value="paper['title']"><br>
-  	<input :value="paper['year']"><br>
+  	<input v-model="paper['title']"><br>
+  	<input v-model="paper['year']"><br>
   	Authors:
-    <taglist v-model="authors" />
+    <taglist v-model="authors" editable=true />
   	Tags:
-    <taglist v-model="tags" />
+    <taglist v-model="tags" editable=true />
     <button @click="save()">Save</button>
   </div>
 </template>
@@ -46,8 +46,12 @@ export default {
   	}, 
     save: function() {
       axios
-      .put('http://localhost:8000/editpaper', 
-        JSON.stringify({pid: this.pid, tags: this.tags}))
+      .put('http://localhost:8000/editpaper',
+        JSON.stringify({pid: this.pid,
+          tags: this.tags,
+          authors: this.authors,
+          title: this.paper['title'],
+          year: this.paper['year']}))
     }
   }
 }

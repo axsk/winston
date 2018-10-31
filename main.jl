@@ -1,3 +1,6 @@
+import Base.map
+map(f, s::AbstractSet) = Set([f(s) for s in s])
+
 using Neo4j
 using JSON
 

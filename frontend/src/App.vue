@@ -4,11 +4,11 @@
       <b-row>
           <b-col cols=2>
             <div class="sticky-top">
-              <Search />
+              <Search @result="update"/>
             </div>
           </b-col>
           <b-col cols="7">
-            <Table v-on:row-clicked="selectpaper"/>
+            <Table :datas="paperData" v-on:row-clicked="selectpaper"/>
           </b-col>
           <b-col cols=3>
             <div class="sticky-top">
@@ -35,7 +35,8 @@ export default {
   },
   data () { 
     return {
-      currentpid: null
+      currentpid: null,
+      paperData: []
     }
   },
   methods: {
@@ -46,6 +47,10 @@ export default {
       let tags = axios.get('http://localhost:8000/usertags/'+user);
       alert(JSON.stringify(tags["data"]))
       return tags["data"]
+    },
+    update(results) {
+      //alert(JSON.stringify(results))
+      this.paperData = results
     }
   }
 }

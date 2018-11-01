@@ -1,11 +1,16 @@
 <template>
-  <b-table striped hover :items="items" :fields="fields" v-on:row-clicked="selectRow"></b-table>
+  <div>
+    <b-table striped hover 
+    :items="datas" :fields="fields"
+    v-on:row-clicked="selectRow"/>
+  </div>
 </template>
 
 <script>
 import axios from 'axios'
 
 export default {
+  props: ['datas'],
   data () {
     return {
       items: [],
@@ -26,7 +31,12 @@ export default {
     selectRow: function (item, index, event){
       this.$emit('row-clicked', item['uuid'])
     }
-  }
+  },
+  watch: { 
+        datas: function(newVal, oldVal) { // watch it
+          this.$forceUpdate();
+        }
+      }
 }
 
 </script>

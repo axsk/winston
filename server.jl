@@ -14,9 +14,8 @@ function getpapers(user="Alex")
 	 for rr in r.results[1]["data"]]
 end
 
-function api_search(text, user, usertags)
-
-
+function api_search(query, user, usertags)
+	@show query, user, usertags
 	tx = transaction(c)
 	tx( "MATCH (p:Paper)--(a:Author) with p, collect(a.name) as authors
 		 OPTIONAL MATCH (p)--(tt:Tagging)--(u:User {name: \$user}), 
@@ -26,7 +25,7 @@ function api_search(text, user, usertags)
 		 AND p.title =~ \$regex
 		 RETURN p.year, p.title, authors, tags, p.uuid",
 
-		"regex" => "(?i).*" * text * ".*", 
+		"regex" => "(?i).*" * query * ".*", 
 		"user" => user, 
 		"usertags" => usertags)
 	r = commit(tx)
@@ -116,11 +115,18 @@ end
 
 ## Middleware
 
-function addHeaderMux(app, req)
+function MuxHeaders(app, req)
 	res = app(req)
 	@show typeof(res)
 	@show req
 	addHeader(res)
+end
+
+function MuxQuery(app, req)
+	req[:query] = HttpCommon.parsequerystring(req[:query])
+	jq = get(req[:query], "json", "{}")
+	req[:jq] = JSON.parse(jq)
+	app(req)
 end
 
 function addHeader(res)
@@ -136,12 +142,18 @@ end
 
 global d
 
-@app app = (Mux.defaults,
-	    page("/", req->getpapers() |> json |> addHeader),
-	    page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
-	    page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
-	    page("/editpaper", req->editpaper(req)|>json|>addHeader),
-	    Mux.notfound())
+	@app app = (Mux.defaults, MuxQuery,
+		    page("/", req->getpapers() |> json |> addHeader),
+		    page("/papers", 
+				req->(@show req; api_search(req[:jq]) |> json |> addHeader)),
+		    page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
+		    page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
+		    page("/editpaper", req->editpaper(req)|>json|>addHeader),
+		    Mux.notfound())
+
+	function api_search(d::Dict)
+		api_search(d["query"], d["user"], d["usertags"])
+	end
 
 function editpaper(req)
 	if length(req[:data]) > 0

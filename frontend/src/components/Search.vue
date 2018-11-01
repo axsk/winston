@@ -1,9 +1,13 @@
 <template>
   <div>
   	Search<br>
-	<input><br>
+	<input v-model="searchquery" @keyup.enter="update">
+	<button @click="update" value="go">Go</button>
+	<br>
+
 	Filter tags:<br>
 	<taglist :value="usertags" selectable=true @select="tagselected"/>
+
 	Filter date:<br>
   </div>
 </template>
@@ -19,7 +23,9 @@ export default {
   data () {
     return {
       usertags: [],
-      selectedtags: []
+      selectedtags: [],
+      searchquery: "",
+      result: {}
     }
   },
   mounted () {
@@ -29,7 +35,19 @@ export default {
   },
   methods: {
   	tagselected: function (tags) {
-  		[...tags]
+  		this.selectedtags = [...tags]
+  		this.update()
+  	},
+  	update() {
+  		let jq = JSON.stringify({
+  				usertags: this.selectedtags,
+  				user: "Alex",
+  				query: this.searchquery
+  			})
+  		axios
+			.get('http://localhost:8000/papers?json='+jq)
+			.then(response => (this.result = response.data))
+      		.finally(() => this.$emit('result', this.result))
   	}
   }
 }

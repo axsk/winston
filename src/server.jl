@@ -23,7 +23,8 @@ function api_search(query, user, usertags)
 		 WITH p, authors, collect(t.name) as tags
 		 WHERE ALL(tag in \$usertags WHERE tag in tags)
 		 AND p.title =~ \$regex
-		 RETURN p.year, p.title, authors, tags, p.uuid",
+		 RETURN p.year, p.title, authors, tags, p.uuid
+		 LIMIT 100",
 
 		"regex" => "(?i).*" * query * ".*", 
 		"user" => user, 

@@ -1,15 +1,22 @@
 <template>
-  <div>
-  	Search<br>
-	<input v-model="searchquery" @keyup.enter="update">
-	<button @click="update" value="go">Go</button>
-	<br>
-
-	Filter tags:<br>
+  <el-card>
+  	<div slot="header">
+  		Search
+  	</div>
+  	<el-form label-width="50px">
+  		<el-form-item label="Title">
+			<el-input v-model="searchquery" @keyup.enter.native="update" />
+		</el-form-item>
+		<el-form-item label="Author">
+			<el-input />
+		</el-form-item>
+		<el-form-item label="Year">
+			<el-input />
+		</el-form-item>
+		<el-button @click="update" value="go">Go</el-button>
+	</el-form>
 	<taglist :value="usertags" selectable=true @select="tagselected"/>
-
-	Filter date:<br>
-  </div>
+  </el-card>
 </template>
 
 <script>

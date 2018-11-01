@@ -1,26 +1,23 @@
 <template>
   <div id="app">
-    <b-container fluid>
-      <b-row>
-          <b-col cols=2>
-            <div class="sticky-top">
-              <Search @result="update"/>
-            </div>
-          </b-col>
-          <b-col cols="7">
-            <Table :datas="paperData" v-on:row-clicked="selectpaper"/>
-          </b-col>
-          <b-col cols=3>
-            <div class="sticky-top">
-              <Paper v-if="currentpid != null" :pid="currentpid" />
-            </div>
-          </b-col>
-      </b-row>
-  </b-container>
+  <el-container>
+    <div class="sticky-top">
+    <el-aside>
+        <Search @result="update"/>
+    </el-aside></div>
+    <el-main>
+      <el-dialog :visible.sync="dialogVisible" title="Edit">
+        <Paper v-if="currentpid != null" :pid="currentpid" />
+      </el-dialog>
+      <Table :datas="paperData" v-on:row-clicked="selectpaper"/>
+    </el-main>
+  </el-container>
+
   </div>
 </template>
 
 <script>
+
 import Table from './components/Table.vue'
 import Paper from './components/Paper.vue'
 import Search from './components/Search.vue'
@@ -36,12 +33,14 @@ export default {
   data () { 
     return {
       currentpid: null,
+      dialogVisible: false,
       paperData: []
     }
   },
   methods: {
     selectpaper(pid) {
       this.currentpid = pid
+      this.dialogVisible = true
     },
     getusertags(user) {
       let tags = axios.get('http://localhost:8000/usertags/'+user);

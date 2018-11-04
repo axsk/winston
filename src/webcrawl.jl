@@ -1,5 +1,7 @@
 module WebCrawl
 
+
+
 struct Author
 	family
 	given 
@@ -99,7 +101,8 @@ module SemanticScholar
 			global x=data = JSON.parse(String(r.body))
 			w = parsepaper(data)
 		catch e
-			@show e
+			@info e
+			rethrow(e)
 			Work(nothing, nothing, nothing, doi, nothing, nothing, nothing)
 		end
 	end
@@ -118,10 +121,7 @@ module SemanticScholar
 	parseauthors(data::Dict) = map(a->parseauthor(a["name"]), g(data, "authors"))
 
 	function parseauthor(s::AbstractString)
-		i = length(s)
-		while s[i] != ' '
-			i -= 1
-		end
+		i = findprev(" ", s, lastindex(s)) |> first
 		given  = s[1:i-1]
 		family = s[i+1:end]
 		Author(family, given)
@@ -129,6 +129,9 @@ module SemanticScholar
 end
 
 import .Crossref.search
+
+# crawl(doi)
+# crawl(; query, year, author, title, limit)
 
 function crawl(args...; kwargs...)
 	c = search(args...; kwargs...)

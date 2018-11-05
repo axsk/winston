@@ -14,7 +14,7 @@ function loaduuid(uuid::String)::Paper
 	parsepaperauthor(d[1,1], d[1,2])
 end
 
-function parsepaperauthor(p::Dict, as::Vector{T})::Paper where T<:Dict 
+function parsepaperauthor(p::Dict, as::Vector)::Paper
 	as = map(Author, as)
 	p  = Paper(p, authors = as)
 end
@@ -40,16 +40,16 @@ function getpapers(user="Alex")
 	 for rr in r.results[1]["data"]]
 end
 
-function api_search(query, user, usertags) :: Array{Dict}
+function api_search(query, user, usertags)
 	query, user, usertags
 	tx = transaction(c)
-	tx( "MATCH (p:Paper)--(a:Author) with p, collect(a.name) as authors
+	tx( "MATCH (p:Paper)--(a:Author) with p, collect(a) as authors
 		 OPTIONAL MATCH (p)--(tt:Tagging)--(u:User {name: \$user}),
 		 	(tt)--(t:Tag)
 		 WITH p, authors, collect(t.name) as tags
 		 WHERE ALL(tag in \$usertags WHERE tag in tags)
 		 AND p.title =~ \$regex
-		 RETURN p.year, p.title, authors, tags, p.uuid
+		 RETURN p, authors, tags
 		 LIMIT 100",
 
 		"regex" => "(?i).*" * query * ".*",
@@ -57,23 +57,13 @@ function api_search(query, user, usertags) :: Array{Dict}
 		"usertags" => usertags)
 	r = commit(tx)
 	results = map(r.results[1]["data"]) do r
-		row = r["row"]
-		Dict(
-			"Year"=>row[1],
-			"Title"=>row[2],
-			"Authors"=>join(row[3], ", "),
-			"Tags"=>join(row[4], ", "), "uuid"=>row[5])
+		@show r = r["row"]
+		p = parsepaperauthor(r[1],r[2])
+		p = Paper(p, usertags = r[3])
 	end
 
 	if length(results) < 1 && usertags == []
-		papers = WebCrawl.Crossref.search(query=query, limit=20)
-		results = map(filter(isvalid, papers)) do p
-			Dict(
-				"Year"=>p.year,
-				"Title"=>p.title,
-				"Authors"=>string(p.authors),
-				"Tags"=>"")
-		end
+		WebCrawl.Crossref.search(query=query, limit=20)
 	else
 		results
 	end
@@ -162,8 +152,6 @@ end
 
 clear!() = cypherQuery(c, "MATCH (n) DETACH DELETE n")
 
-Base.show(p::Paper) = dump(p)#("$(p.year) - $(reduce(*, p.authors)) - $(p.title)")
-Base.show(io::IO, p::Paper) = print(IO, "$(p.year) - $(p.title)")
 
 function add(p::Paper, owned=false)
 	owned = owned ? ":Owned" : ""

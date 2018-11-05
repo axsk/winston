@@ -1,12 +1,13 @@
 <template>
   <div>
-    <li v-for="tag, index in value">
-      <span @click="toggle(tag)" v-bind:class="[selected.has(tag) ? 'sel' : '']">
-        {{tag}} 
-        <button v-if="editable" @click="remove(index)">x</button>
-      </span>
-    </li>
-    
+    <span v-for="tag, index in value" @click="toggle(tag)">
+      <el-tag  
+        v-bind:class="[selected.has(tag) ? 'sel' : '']"
+        :closable="editable"
+        @close="remove(index)">
+        {{tag}}
+      </el-tag>
+    </span>
     <input v-if="editable" v-model="newtag" @keyup.enter="add">
   </div>
 </template>
@@ -57,4 +58,4 @@ export default {
 .sel {
   background-color: lightblue; 
 }
-</style>
+</style>  

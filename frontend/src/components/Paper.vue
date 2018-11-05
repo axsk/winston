@@ -1,11 +1,11 @@
 <template>
   <div>
-  	<input v-model="paper['title']"><br>
-  	<input v-model="paper['year']"><br>
+  	<el-input v-model="paper['title']" /><br>
+  	<el-input v-model="paper['year']" /><br>
   	Authors:
-    <taglist v-model="authors" editable=true />
+    <taglist v-model="authors" editable />
   	Tags:
-    <taglist v-model="tags" editable=true />
+    <taglist v-model="tags" editable />
     <button @click="save()">Save</button>
   </div>
 </template>

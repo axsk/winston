@@ -9,7 +9,7 @@
       <el-dialog :visible.sync="dialogVisible" title="Edit">
         <Paper v-if="currentpid != null" :pid="currentpid" />
       </el-dialog>
-      <Table :datas="paperData" v-on:row-clicked="selectpaper"/>
+      <emtable :papers="paperData" v-on:row-clicked="selectpaper"/>
     </el-main>
   </el-container>
 
@@ -18,6 +18,7 @@
 
 <script>
 
+import emtable from './components/emtable.vue'
 import Table from './components/Table.vue'
 import Paper from './components/Paper.vue'
 import Search from './components/Search.vue'
@@ -28,7 +29,8 @@ export default {
   components: {
     Table,
     Paper,
-    Search
+    Search,
+    emtable
   },
   data () { 
     return {
@@ -44,11 +46,9 @@ export default {
     },
     getusertags(user) {
       let tags = axios.get('http://localhost:8000/usertags/'+user);
-      alert(JSON.stringify(tags["data"]))
       return tags["data"]
     },
     update(results) {
-      //alert(JSON.stringify(results))
       this.paperData = results
     }
   }
@@ -61,7 +61,7 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: left;
-  color: #2c3e50;
+  //color: #2c3e50;
   margin-top: 20px;
 }
 </style>

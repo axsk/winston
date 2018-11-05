@@ -1,33 +1,17 @@
 module WebCrawl
 
+import ..Author, ..Paper
 
+Base.map(f, ::Missing) = missing
 
-struct Author
-	family
-	given 
-end
-
-mutable struct Work
-	year
-	authors
-	title
-	doi
-	link
-	references
-	citations
-end
-
-
-Base.map(f, ::Nothing) = nothing
-
-g(::Nothing, i) = nothing
-g(x, i) = get(x, i, nothing)
+g(::Missing, i) = missing # why do i need this
+g(x, i) = get(x, i, missing)
 g(x, i, j) = g(g(x, i), j)
 g(x, k...) = g(g(x, k[1:end-1]...), k[end])
 
 module Crossref
 	using PyCall
-	import ..WebCrawl: Author, Work, g
+	import ..WebCrawl: Author, Paper, g
 
 	@pyimport habanero
 	cr = habanero.Crossref()
@@ -66,23 +50,20 @@ module Crossref
 	end
 
 	function parsedata(items)
-		works = []
+		papers = []
 		for i in items
 			try 
-				year    = parseyear(i)
-				authors = parseauthors(i)
-				title   = g(i, "title", 1)
-				doi     = g(i, "DOI")
-				link    = parselinks(i)
-				push!(works, Work(year, authors, title, doi, link, nothing, nothing))
+				push!(papers, 
+					Paper(year=parseyear(i),
+						authors=parseauthors(i),
+						title=g(i, "title", 1),
+						doi=g(i, "DOI"),
+						link = parselinks(i)))
 			catch e
 				@info "Could not parse $i\nCaught $e"
 			end
 		end
-		return works
-	end
-
-	function getdoi()
+		return papers
 	end
 
 	parseyear(x)    = g(x, "issued", "date-parts", 1)
@@ -93,39 +74,26 @@ end
 module SemanticScholar
 	using HTTP
 	using JSON
-	import ..WebCrawl: Author, Work, g
+	import ..WebCrawl: Author, Paper, g
+	import ...parseauthorname
 
 	function getdoi(doi)
-		try 
-			global r = HTTP.request("GET", "http://api.semanticscholar.org/v1/paper/$doi?include_unknown_references=true")
-			global x=data = JSON.parse(String(r.body))
-			w = parsepaper(data)
-		catch e
-			@info e
-			rethrow(e)
-			Work(nothing, nothing, nothing, doi, nothing, nothing, nothing)
-		end
+		global r = HTTP.request("GET", "http://api.semanticscholar.org/v1/paper/$doi?include_unknown_references=true")
+		global x=data = JSON.parse(String(r.body))
+		w = parsepaper(data)
 	end
 
 	function parsepaper(data::Dict)
-		Work(
-			g(data, "year"),
-			parseauthors(data),
-			g(data, "title"),
-			g(data, "doi"),
-			nothing,
-			map(parsepaper, g(data, "references")),
-			map(parsepaper, g(data, "citations")))
+		Paper(
+			year=g(data, "year"),
+			authors=parseauthors(data),
+			title=g(data, "title"),
+			doi=g(data, "doi"),
+			references=map(parsepaper, get(data, "references", [])),
+			citations=map(parsepaper, get(data, "citations", [])))
 	end
 
-	parseauthors(data::Dict) = map(a->parseauthor(a["name"]), g(data, "authors"))
-
-	function parseauthor(s::AbstractString)
-		i = findprev(" ", s, lastindex(s)) |> first
-		given  = s[1:i-1]
-		family = s[i+1:end]
-		Author(family, given)
-	end
+	parseauthors(data::Dict) = map(a->parseauthorname(a["name"]), g(data, "authors"))
 end
 
 import .Crossref.search
@@ -134,13 +102,20 @@ import .Crossref.search
 # crawl(; query, year, author, title, limit)
 
 function crawl(args...; kwargs...)
-	c = search(args...; kwargs...)
-	s = map(c->SemanticScholar.getdoi(c.doi), c)
-	for i in 1:length(c)
-		c[i].references = s[i].references
-		c[i].citations  = s[i].citations
+	papers = search(args...; kwargs...)
+	map(papers) do p
+		try
+			s = SemanticScholar.getdoi(p.doi)
+			Paper(s, references=s.references, citations=s.citations)
+		catch
+			p
+		end
 	end
-	c
+end
+
+
+function test()
+	crawl("10.1073/pnas.1618455114")
 end
 
 end

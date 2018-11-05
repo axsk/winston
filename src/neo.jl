@@ -1,21 +1,31 @@
 using Neo4j
 using JSON
 
-function load(p::Paper)
-	if p.uuid != nothing
-		d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})--(a:Author) return p, collect(a) as a", :uid => p.uuid)
-		p = Paper(d[1,1])
-		p.authors = map(Author, d[1,2])
-	else
-		@info "could not load the paper"
-	end
-end
-
 function connect()
 	return Connection("localhost"; user="neo4j", password="alex")
 end
 
 c = connect()
+
+### ATOMIC GETS
+
+function loaduuid(uuid::String)::Paper
+	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})--(a:Author) return p, collect(a) as a", :uid => uuid)
+	parsepaperauthor(d[1,1], d[1,2])
+end
+
+function parsepaperauthor(p::Dict, as::Vector{T})::Paper where T<:Dict 
+	as = map(Author, as)
+	p  = Paper(p, authors = as)
+end
+
+function loadrefs(p::Paper)::Paper
+	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})-[:referenced]->(r:Paper)--(a:Author) return r, collect(a) as a", :uid => p.uuid)
+	refs = [parsepaperauthor(d[i,1], d[i,2]) for i in 1:size(d,1)]
+	Paper(p, references = refs)
+end
+
+### SEARCH
 
 function getpapers(user="Alex")
 	tx = transaction(c)
@@ -31,7 +41,7 @@ function getpapers(user="Alex")
 end
 
 function api_search(query, user, usertags) :: Array{Dict}
-	@show query, user, usertags
+	query, user, usertags
 	tx = transaction(c)
 	tx( "MATCH (p:Paper)--(a:Author) with p, collect(a.name) as authors
 		 OPTIONAL MATCH (p)--(tt:Tagging)--(u:User {name: \$user}),
@@ -57,7 +67,7 @@ function api_search(query, user, usertags) :: Array{Dict}
 
 	if length(results) < 1 && usertags == []
 		papers = WebCrawl.Crossref.search(query=query, limit=20)
-		@show results = map(filter(isvalid, papers)) do p
+		results = map(filter(isvalid, papers)) do p
 			Dict(
 				"Year"=>p.year,
 				"Title"=>p.title,
@@ -68,6 +78,8 @@ function api_search(query, user, usertags) :: Array{Dict}
 		results
 	end
 end
+
+### LEGACY GETS
 
 function getpaper(id)
 	tx = transaction(c)
@@ -85,6 +97,35 @@ function getusertags(user)
 	d = cypherQuery(c, "MATCH (u:User {name: \$user})--(tt:Tagging)--(t:Tag) RETURN t.name, count(t) as c ORDER BY c DESC",
 		"user" => user)
 	get(d, 1, [])
+end
+
+### LEGACY WRITES
+
+function editpaper(pid, title, year)
+	cypherQuery(c, "MATCH (p:Paper {uuid: \$pid})
+		SET p.title = \$title, p.year = \$year",
+        :pid => pid, :title => title, :year => year)
+end
+
+function syncauthors(pid, authors)
+	# get current author names
+	d = cypherQuery(c, "MATCH (:Paper {uuid: \$pid})--(a:Author) RETURN a.name", "pid" => pid)
+	dbauthors = get(d, 1, [])
+
+	@show add    = setdiff(authors, dbauthors)
+	@show remove = setdiff(dbauthors, authors)
+
+	tx = transaction(c)
+	tx("MATCH (p:Paper {uuid: \$pid})
+		UNWIND \$names as name
+		MATCH (p)-[r]-(a:Author {name: name})
+		DELETE r",
+		"pid" => pid, "names" => remove)
+	tx("MATCH (p:Paper {uuid: \$pid})
+		UNWIND \$names as name
+		MERGE (p)<-[:wrote]-(a:Author {name: name})",
+		"pid" => pid, "names" => add)
+	commit(tx)
 end
 
 function synctags(user, pid, tags)
@@ -117,44 +158,12 @@ function synctags(user, pid, tags)
 	commit(tx)
 end
 
-function editpaper(pid, title, year)
-	cypherQuery(c, "MATCH (p:Paper {uuid: \$pid})
-		SET p.title = \$title, p.year = \$year",
-        :pid => pid, :title => title, :year => year)
-end
-
-function crawlerupdate(pid)
-	cypherQuery(c, "MATCH (p:Paper {uuid: \$pid}) RETURN p.title as t, p.", :pid => pid)
-    #WebCrawl.crawl()
-end
-
-function syncauthors(pid, authors)
-	# get current author names
-	d = cypherQuery(c, "MATCH (:Paper {uuid: \$pid})--(a:Author) RETURN a.name", "pid" => pid)
-	dbauthors = get(d, 1, [])
-
-	@show add    = setdiff(authors, dbauthors)
-	@show remove = setdiff(dbauthors, authors)
-
-	tx = transaction(c)
-	tx("MATCH (p:Paper {uuid: \$pid})
-		UNWIND \$names as name
-		MATCH (p)-[r]-(a:Author {name: name})
-		DELETE r",
-		"pid" => pid, "names" => remove)
-	tx("MATCH (p:Paper {uuid: \$pid})
-		UNWIND \$names as name
-		MERGE (p)<-[:wrote]-(a:Author {name: name})",
-		"pid" => pid, "names" => add)
-	commit(tx)
-end
-
-
 ### LEGACY ###
 
 clear!() = cypherQuery(c, "MATCH (n) DETACH DELETE n")
 
-Base.show(io::IO, p::Paper) = dump(p)#("$(p.year) - $(reduce(*, p.authors)) - $(p.title)")
+Base.show(p::Paper) = dump(p)#("$(p.year) - $(reduce(*, p.authors)) - $(p.title)")
+Base.show(io::IO, p::Paper) = print(IO, "$(p.year) - $(p.title)")
 
 function add(p::Paper, owned=false)
 	owned = owned ? ":Owned" : ""

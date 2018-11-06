@@ -1,11 +1,11 @@
 <template>
   <div>
-  	<el-input v-model="paper['title']" /><br>
-  	<el-input v-model="paper['year']" /><br>
+  	<el-input v-model="paper.title" /><br>
+  	<el-input v-model="paper.year" /><br>
   	Authors:
-    <taglist v-model="authors" editable />
+    <taglist v-model="paper.authors" editable />
   	Tags:
-    <taglist v-model="tags" editable />
+    <taglist v-model="paper.usertags" editable />
     <button @click="save()">Save</button>
   </div>
 </template>
@@ -15,43 +15,26 @@ import axios from 'axios'
 import taglist from './Taglist.vue'
 
 export default {
-
   components: {
      taglist
   },
-  props: ['pid'],
-  data () {
-    return {
-      paper: {},
-      authors: [],
-      tags: []
+  filters: {
+    parseAuthors: function(as) {
+      if (as != "undefined") {
+          return as.map(function(x){
+            return x.family
+          }).join(", ")
+        } else {
+          undefined
+        }
     }
   },
-  mounted () {
-  	this.pid == null || this.update()
-  },
-  watch: {
-  	pid: function (newv, oldv) {
-  			this.update()
-	}
-  },
+  props: ['paper'],
   methods: {
-  	update: function() {
-  		axios
-			.get('http://localhost:8000/paper/'+this.pid)
-			.then(response => (this.paper = response.data[0],
-							   this.authors = response.data[1].map(x=>x.name),
-							   this.tags = response.data[2].map(x=>x.name))
-			)
-  	}, 
     save: function() {
       axios
       .put('http://localhost:8000/editpaper',
-        JSON.stringify({pid: this.pid,
-          tags: this.tags,
-          authors: this.authors,
-          title: this.paper['title'],
-          year: this.paper['year']}))
+        JSON.stringify(paper))
     }
   }
 }

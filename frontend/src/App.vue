@@ -7,7 +7,7 @@
     </el-aside></div>
     <el-main>
       <el-dialog :visible.sync="dialogVisible" title="Edit">
-        <Paper v-if="currentpid != null" :pid="currentpid" />
+        <Paper v-if="selectedPaper != null" :paper="selectedPaper" />
       </el-dialog>
       <emtable :papers="paperData" v-on:row-clicked="selectpaper"/>
     </el-main>
@@ -34,14 +34,14 @@ export default {
   },
   data () { 
     return {
-      currentpid: null,
+      selectedPaper: null,
       dialogVisible: false,
       paperData: []
     }
   },
   methods: {
-    selectpaper(pid) {
-      this.currentpid = pid
+    selectpaper(paper) {
+      this.selectedPaper = paper
       this.dialogVisible = true
     },
     getusertags(user) {

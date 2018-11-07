@@ -28,7 +28,7 @@ end
 
 ### SEARCH
 
-function getpapers(user="Alex")
+#=function getpapers(user="Alex")
 	tx = transaction(c)
 	tx("MATCH (p:Owned)--(a:Author) with p, collect(a.name) as authors
 		OPTIONAL MATCH (p)--(tt:Tagging)--(:User {name: \$user}), (tt)--(t:Tag)
@@ -39,7 +39,7 @@ function getpapers(user="Alex")
 		 Dict("Year"=>row[1], "Title"=>row[2], "Authors"=>join(row[3], ", "), "Tags"=>join(row[4], ", "), "uuid"=>row[5])
 	 end
 	 for rr in r.results[1]["data"]]
-end
+	 end=#
 
 function api_search(query::String, user::String, usertags::Vector)
 	query, user, usertags
@@ -59,9 +59,7 @@ function api_search(query::String, user::String, usertags::Vector)
 	r = commit(tx)
 	results = map(r.results[1]["data"]) do r
 		r = r["row"]
-		#p = parsepaperauthor(r[1],r[2])
 		p = Paper(r[1], authors=r[2], usertags=r[3])
-		#p = Paper(p, usertags = r[3])
 	end
 
 	if length(results) < 1 && usertags == []
@@ -76,10 +74,6 @@ test_api_search()
 
 # UPDATES
 
-hasval(::Missing) = false
-hasval(::Nothing) = false
-hasval(::Any) = true
-
 function syncpaper(p::Paper, user)
 	editpaper(p)
 	syncauthors(p)
@@ -89,7 +83,7 @@ end
 function editpaper(p::Paper)
 	tx = transaction(c)
 	tx("MERGE (p:Paper {uuid: \$p.uuid})
-		ON CREATE SET p.uuid = apoc.create.uuid(), p.date = datetime() " *
+		ON CREATE SET p.uuid = apoc.create.uuid(), p.created = datetime() " *
 		(hasval(p.title) ? "SET p.title = \$p.title " : "") *
 		(hasval(p.year)  ? "SET p.year = \$p.year " : "") *
 		"RETURN p",
@@ -104,19 +98,21 @@ function syncauthors(p::Paper)
 	d = cypherQuery(c, "MATCH (:Paper {uuid: \$pid})--(a:Author) RETURN a", :pid => pid)
 
 	dbauthors = map(Author, get(d, 1, []))
-	@show add    = setdiff(p.authors, dbauthors)
-	@show remove = setdiff(dbauthors, p.authors)
+	add    = setdiff(p.authors, dbauthors)
+	remove = setdiff(dbauthors, p.authors)
 	
 	tx = transaction(c)
 	# TODO: not working with old style authors; FIX: use uuid
 	tx("MATCH (p:Paper {uuid: \$pid})
 		UNWIND \$authors as a
-		MATCH (p)-[r]-(:Author {given: a.given, family: a.family})
+		MATCH (p)-[r]-(:Author {uuid: a.uuid})
 		DELETE r",
 		:pid => pid, :authors => remove)
 	tx("MATCH (p:Paper {uuid: \$pid})
 		UNWIND \$authors as a
-		MERGE (p)<-[:wrote]-(:Author {given: a.given, family: a.family})",
+		MERGE (aa:Author {uuid: a.uuid})
+		ON CREATE SET aa.uuid = apoc.create.uuid(), aa.created = datetime()
+		MERGE (p)<-[:wrote]-(aa)",
 		:pid => pid, :authors => add)
 	commit(tx)
 end
@@ -124,6 +120,8 @@ end
 function synctags(paper, user)
 	pid = paper.uuid
 	tags = paper.usertags
+
+	hasval(tags) || return
 
 	d = cypherQuery(c,
 		"MATCH (u:User {name: \$user})--(tt:Tagging)--(p:Paper {uuid: \$pid}),
@@ -140,7 +138,7 @@ function synctags(paper, user)
 			(p:Paper {uuid: \$pid})
 		UNWIND \$tags as tag
 		MERGE (t:Tag  {name: tag})
-		CREATE (u)-[:tag]->(tt:Tagging {date: datetime()})-[:tag]->(p),
+		CREATE (u)-[:tag]->(tt:Tagging {created: datetime()})-[:tag]->(p),
 			(tt)-[:tag]->(t)",
 		"user" => user, "pid" => pid, "tags" => add)
 	# remove
@@ -219,7 +217,7 @@ function synctags(user, pid, tags)
 		      (p:Paper {uuid: \$pid})
 		UNWIND \$tags as tag
 	    MERGE (t:Tag  {name: tag})
-	    CREATE (u)-[:tag]->(tt:Tagging {date: datetime()})-[:tag]->(p),
+	    CREATE (u)-[:tag]->(tt:Tagging {created: datetime()})-[:tag]->(p),
 	           (tt)-[:tag]->(t)",
 	    "user" => user, "pid" => pid, "tags" => add)
 	# remove

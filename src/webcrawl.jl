@@ -2,10 +2,8 @@ module WebCrawl
 
 import ..Author, ..Paper
 
-Base.map(f, ::Missing) = missing
-
-g(::Missing, i) = missing # why do i need this
-g(x, i) = get(x, i, missing)
+g(::Nothing, i) = nothing #for recursive gets with inbetween misses
+g(x, i) = get(x, i, nothing)
 g(x, i, j) = g(g(x, i), j)
 g(x, k...) = g(g(x, k[1:end-1]...), k[end])
 
@@ -67,7 +65,7 @@ module Crossref
 	end
 
 	parseyear(x)    = g(x, "issued", "date-parts", 1)
-	parseauthors(x) = map(x->Author(g(x, "family"), g(x, "given")), g(x, "author"))
+	parseauthors(x) = map(x->Author(family = g(x, "family"), given = g(x, "given")), get(x, "author", []))
 	parselinks(x)    = g(x, "link", 1, "URL")
 end
 
@@ -93,7 +91,10 @@ module SemanticScholar
 			citations=map(parsepaper, get(data, "citations", [])))
 	end
 
-	parseauthors(data::Dict) = map(a->parseauthorname(a["name"]), g(data, "authors"))
+	parseauthors(data::Dict) = map(g(data, "authors")) do a
+		family, given = parseauthorname(a["name"]), 
+		Author(family=family, given=given)
+	end
 end
 
 import .Crossref.search

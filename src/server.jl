@@ -34,7 +34,7 @@ end
 global d
 
 @app app = (Mux.defaults, Muxify,
-	page("/", req->getpapers() |> json |> addHeader),
+	#page("/", req->getpapers() |> json |> addHeader),
 	page("/papers", req->(api_search(req[:jq]) |> json |> addHeader)),
 	page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
 	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
@@ -49,7 +49,7 @@ function editpaper(req, user="Alex")
 	if length(req[:data]) > 0
 		s = String(req[:data])
 		d = JSON.parse(s)
-		@show p = Paper(d)
+		p = Paper(d)
 		syncpaper(p, user)
 	end
 	return ""

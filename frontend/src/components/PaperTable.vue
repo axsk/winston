@@ -1,7 +1,7 @@
 <template>
   <el-table :data="papers" @row-click="selectRow" striped>
     <el-table-column label="Year" prop="year" width=100% sortable />
-    <el-table-column label="Authors" width=300px sortable> 
+    <el-table-column label="Authors" width=180px sortable> 
       <template slot-scope="scope">{{ scope.row.authors | parseAuthors }}</template>
     </el-table-column>
     <el-table-column label="Title" prop="title" sortable />
@@ -22,12 +22,12 @@ export default {
   },
   filters: {
     parseAuthors: function(as) {
-      if (as != "undefined") {
+      if (as != null) {
           return as.map(function(x){
             return x.family
           }).join(", ")
         } else {
-          undefined
+          null
         }
     }
   }

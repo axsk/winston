@@ -1,34 +1,35 @@
 using Parameters
 using JSON
 
-JSON.lower(::Missing) = nothing
-
-Base.map(f, ::Missing) = missing
 Base.map(f, ::Nothing) = nothing
 
+hasval(::Nothing) = false
+hasval(::Any) = true
+
 @with_kw struct Paper
-    uuid = missing
-    year = missing
-    authors = missing
-    title = missing
-    doi = missing
-    link = missing
-    references = missing
-	citations = missing
-    date = missing
-    usertags = missing
-    function Paper(uuid, year, authors, title, doi, link, references, citations, date, usertags)
+    uuid = nothing
+    year = nothing
+    authors = nothing
+    title = nothing
+    doi = nothing
+    link = nothing
+    references = nothing
+	citations = nothing
+    date = nothing # remove this
+    created = nothing
+    usertags = nothing
+    function Paper(uuid, year, authors, title, doi, link, references, citations, date, created, usertags)
         authors = map(Author, authors)
         citations = map(Paper, citations)
         references = map(Paper, references)
-        new(uuid, year, authors, title, doi, link, references, citations, date, usertags)
+        new(uuid, year, authors, title, doi, link, references, citations, date, created, usertags)
     end
 end
 
 @with_kw struct Author
-    uuid = missing
-	family = missing
-	given = missing
+    uuid = -nothing
+	family = nothing
+	given = nothing
 end
 
 symbolize(d::Dict{String}) = [Symbol(k)=>v for (k,v) in d]
@@ -37,21 +38,14 @@ function Paper(d::Dict{String}; kwargs...)
     Paper(;symbolize(d)..., kwargs...)
 end
 
-Author(d::Dict{String}) = if haskey(d, "name") 
-        Author(d["name"])  # old db version
+function Author(d::Dict{String}; kwargs...) 
+    if haskey(d, "name")
+        family, given = parseauthorname(pop!(d,"name"))
+        Author(;symbolize(d)..., family=family, given=given, kwargs...)
     else 
-        Author(;symbolize(d)...) # new db version
+        Author(;symbolize(d)..., kwargs...) # new db version
     end
-
-Author(name::String) = parseauthorname(name)
-
-function parsepaperauthor(p::Dict, as::Vector)::Paper
-	as = map(Author, as)
-	p  = Paper(p, authors = as)
 end
-
-# remove this
-#Author(; name::String=missing) = parseauthorname(name)
 
 function parseauthorname(s::String)
     try
@@ -64,9 +58,9 @@ function parseauthorname(s::String)
             given  = ""
             family = s
         end
-        Author(family = family, given = given)	
+        family, given
     catch
-        Author(family = s)
+        s, nothing
     end
 end
 

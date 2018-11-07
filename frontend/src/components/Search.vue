@@ -39,6 +39,7 @@ export default {
     axios
       .get('http://localhost:8000/usertags/'+'Alex')
       .then(response => (this.usertags = response.data))
+		this.update()
   },
   methods: {
   	tagselected: function (tags) {

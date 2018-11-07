@@ -1,6 +1,5 @@
 import Base.map
 map(f, s::AbstractSet) = Set([f(s) for s in s])
-map(f, ::Missing) = missing
 
 include("types.jl")
 

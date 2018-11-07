@@ -3,9 +3,9 @@
   	<el-input v-model="paper.title" /><br>
   	<el-input v-model="paper.year" /><br>
   	Authors:
-    <taglist v-model="paper.authors" editable />
+    <taglist v-model="paper.authors" editable="true" />
   	Tags:
-    <taglist v-model="paper.usertags" editable />
+    <taglist v-model="paper.usertags" editable="true" />
     <button @click="save()">Save</button>
   </div>
 </template>
@@ -20,12 +20,12 @@ export default {
   },
   filters: {
     parseAuthors: function(as) {
-      if (as != "undefined") {
+      if (as != null) {
           return as.map(function(x){
             return x.family
           }).join(", ")
         } else {
-          undefined
+          null
         }
     }
   },

@@ -13,7 +13,7 @@ function MuxHeaders(app, req)
 	addHeader(res)
 end
 
-function MuxQuery(app, req)
+function Muxify(app, req)
 	req[:query] = HttpCommon.parsequerystring(req[:query])
 	jq = get(req[:query], "json", "{}") # parse ?json= field
 	req[:jq] = JSON.parse(jq)
@@ -33,7 +33,7 @@ end
 
 global d
 
-@app app = (Mux.defaults, MuxQuery,
+@app app = (Mux.defaults, Muxify,
 	page("/", req->getpapers() |> json |> addHeader),
 	page("/papers", req->(api_search(req[:jq]) |> json |> addHeader)),
 	page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
@@ -45,17 +45,12 @@ function api_search(d::Dict)
 	api_search(d["query"], d["user"], d["usertags"])
 end
 
-function editpaper(req)
-	@show req
+function editpaper(req, user="Alex")
 	if length(req[:data]) > 0
 		s = String(req[:data])
-		@show d = JSON.parse(s)
-		@show Paper(d)
-		return "" 
-		editpaper(d["uuid"], d["title"], d["year"])
-		authors = map(Author, d["authors"])
-		syncauthors(d["pid"], "authors")
-		synctags("Alex", d["pid"], d["tags"])
+		d = JSON.parse(s)
+		@show p = Paper(d)
+		syncpaper(p, user)
 	end
 	return ""
 end

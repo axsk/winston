@@ -26,6 +26,7 @@ Base.map(f, ::Nothing) = nothing
 end
 
 @with_kw struct Author
+    uuid = missing
 	family = missing
 	given = missing
 end
@@ -63,9 +64,9 @@ function parseauthorname(s::String)
             given  = ""
             family = s
         end
-        Author(family, given)	
+        Author(family = family, given = given)	
     catch
-        Author(s, missing)
+        Author(family = s)
     end
 end
 

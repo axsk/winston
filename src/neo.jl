@@ -25,7 +25,6 @@ function test_atoms()
 	p = loaduuid(uuid)
 	loadrefs(p)
 end
-test_atoms()
 
 ### SEARCH
 
@@ -74,6 +73,86 @@ end
 
 test_api_search() = api_search("", "Alex", ["Library"])
 test_api_search()
+
+# UPDATES
+
+hasval(::Missing) = false
+hasval(::Nothing) = false
+hasval(::Any) = true
+
+function syncpaper(p::Paper, user)
+	editpaper(p)
+	syncauthors(p)
+	synctags(p, user)
+end
+
+function editpaper(p::Paper)
+	tx = transaction(c)
+	tx("MERGE (p:Paper {uuid: \$p.uuid})
+		ON CREATE SET p.uuid = apoc.create.uuid(), p.date = datetime() " *
+		(hasval(p.title) ? "SET p.title = \$p.title " : "") *
+		(hasval(p.year)  ? "SET p.year = \$p.year " : "") *
+		"RETURN p",
+		:p => p)
+	r = commit(tx)
+	
+	Paper(r.results[1]["data"][1]["row"][1])
+end
+
+function syncauthors(p::Paper)
+	pid = p.uuid
+	d = cypherQuery(c, "MATCH (:Paper {uuid: \$pid})--(a:Author) RETURN a", :pid => pid)
+
+	dbauthors = map(Author, get(d, 1, []))
+	@show add    = setdiff(p.authors, dbauthors)
+	@show remove = setdiff(dbauthors, p.authors)
+	
+	tx = transaction(c)
+	# TODO: not working with old style authors; FIX: use uuid
+	tx("MATCH (p:Paper {uuid: \$pid})
+		UNWIND \$authors as a
+		MATCH (p)-[r]-(:Author {given: a.given, family: a.family})
+		DELETE r",
+		:pid => pid, :authors => remove)
+	tx("MATCH (p:Paper {uuid: \$pid})
+		UNWIND \$authors as a
+		MERGE (p)<-[:wrote]-(:Author {given: a.given, family: a.family})",
+		:pid => pid, :authors => add)
+	commit(tx)
+end
+
+function synctags(paper, user)
+	pid = paper.uuid
+	tags = paper.usertags
+
+	d = cypherQuery(c,
+		"MATCH (u:User {name: \$user})--(tt:Tagging)--(p:Paper {uuid: \$pid}),
+			(tt)--(t:Tag)
+		RETURN t.name", "user" => user, "pid" => pid)
+	dbtags = get(d, 1, [])
+
+	remove = setdiff(dbtags, tags)
+	add    = setdiff(tags, dbtags)
+
+	tx = transaction(c)
+	# add
+	tx("MATCH (u:User {name: \$user}),
+			(p:Paper {uuid: \$pid})
+		UNWIND \$tags as tag
+		MERGE (t:Tag  {name: tag})
+		CREATE (u)-[:tag]->(tt:Tagging {date: datetime()})-[:tag]->(p),
+			(tt)-[:tag]->(t)",
+		"user" => user, "pid" => pid, "tags" => add)
+	# remove
+	tx("MATCH (u:User {name: \$user}),
+			(p:Paper {uuid: \$pid})
+		UNWIND \$tags as tag
+		MATCH (t:Tag {name: tag}),
+			(u)--(tt)--(p), (tt)--(t)
+		DETACH DELETE tt",
+		"user" => user, "pid" => pid, "tags" => remove)
+	commit(tx)
+end
 
 ### LEGACY GETS
 

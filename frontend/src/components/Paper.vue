@@ -34,7 +34,7 @@ export default {
     save: function() {
       axios
       .put('http://localhost:8000/editpaper',
-        JSON.stringify(paper))
+        JSON.stringify(this.paper))
     }
   }
 }

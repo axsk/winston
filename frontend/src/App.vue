@@ -9,7 +9,7 @@
       <el-dialog :visible.sync="dialogVisible" title="Edit">
         <Paper v-if="selectedPaper != null" :paper="selectedPaper" />
       </el-dialog>
-      <emtable :papers="paperData" v-on:row-clicked="selectpaper"/>
+      <paper-table :papers="paperData" v-on:row-clicked="selectpaper"/>
     </el-main>
   </el-container>
 
@@ -18,8 +18,7 @@
 
 <script>
 
-import emtable from './components/emtable.vue'
-import Table from './components/Table.vue'
+import PaperTable from './components/PaperTable.vue'
 import Paper from './components/Paper.vue'
 import Search from './components/Search.vue'
 import axios from 'axios'
@@ -27,10 +26,9 @@ import axios from 'axios'
 export default {
   name: 'app',
   components: {
-    Table,
     Paper,
     Search,
-    emtable
+    PaperTable
   },
   data () { 
     return {

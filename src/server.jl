@@ -15,7 +15,7 @@ end
 
 function MuxQuery(app, req)
 	req[:query] = HttpCommon.parsequerystring(req[:query])
-	jq = get(req[:query], "json", "{}")
+	jq = get(req[:query], "json", "{}") # parse ?json= field
 	req[:jq] = JSON.parse(jq)
 	app(req)
 end
@@ -46,11 +46,15 @@ function api_search(d::Dict)
 end
 
 function editpaper(req)
+	@show req
 	if length(req[:data]) > 0
 		s = String(req[:data])
-		d = JSON.parse(s)
-		editpaper(d["pid"], d["title"], d["year"])
-		syncauthors(d["pid"], d["authors"])
+		@show d = JSON.parse(s)
+		@show Paper(d)
+		return "" 
+		editpaper(d["uuid"], d["title"], d["year"])
+		authors = map(Author, d["authors"])
+		syncauthors(d["pid"], "authors")
 		synctags("Alex", d["pid"], d["tags"])
 	end
 	return ""

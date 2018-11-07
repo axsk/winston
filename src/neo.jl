@@ -11,19 +11,21 @@ c = connect()
 
 function loaduuid(uuid::String)::Paper
 	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})--(a:Author) return p, collect(a) as a", :uid => uuid)
-	parsepaperauthor(d[1,1], d[1,2])
-end
-
-function parsepaperauthor(p::Dict, as::Vector)::Paper
-	as = map(Author, as)
-	p  = Paper(p, authors = as)
+	Paper(d[1,1], authors = d[1,2])
 end
 
 function loadrefs(p::Paper)::Paper
 	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})-[:referenced]->(r:Paper)--(a:Author) return r, collect(a) as a", :uid => p.uuid)
-	refs = [parsepaperauthor(d[i,1], d[i,2]) for i in 1:size(d,1)]
+	refs = [Paper(d[i,1], authors = d[i,2]) for i in 1:size(d,1)]
 	Paper(p, references = refs)
 end
+
+function test_atoms()
+	uuid = "1"
+	p = loaduuid(uuid)
+	loadrefs(p)
+end
+test_atoms()
 
 ### SEARCH
 
@@ -40,7 +42,7 @@ function getpapers(user="Alex")
 	 for rr in r.results[1]["data"]]
 end
 
-function api_search(query, user, usertags)
+function api_search(query::String, user::String, usertags::Vector)
 	query, user, usertags
 	tx = transaction(c)
 	tx( "MATCH (p:Paper)--(a:Author) with p, collect(a) as authors
@@ -57,9 +59,10 @@ function api_search(query, user, usertags)
 		"usertags" => usertags)
 	r = commit(tx)
 	results = map(r.results[1]["data"]) do r
-		@show r = r["row"]
-		p = parsepaperauthor(r[1],r[2])
-		p = Paper(p, usertags = r[3])
+		r = r["row"]
+		#p = parsepaperauthor(r[1],r[2])
+		p = Paper(r[1], authors=r[2], usertags=r[3])
+		#p = Paper(p, usertags = r[3])
 	end
 
 	if length(results) < 1 && usertags == []
@@ -68,6 +71,9 @@ function api_search(query, user, usertags)
 		results
 	end
 end
+
+test_api_search() = api_search("", "Alex", ["Library"])
+test_api_search()
 
 ### LEGACY GETS
 

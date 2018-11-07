@@ -1,7 +1,10 @@
 using Parameters
 using JSON
 
-JSON.lower(::Missing) = "undefined"
+JSON.lower(::Missing) = nothing
+
+Base.map(f, ::Missing) = missing
+Base.map(f, ::Nothing) = nothing
 
 @with_kw struct Paper
     uuid = missing
@@ -14,6 +17,12 @@ JSON.lower(::Missing) = "undefined"
 	citations = missing
     date = missing
     usertags = missing
+    function Paper(uuid, year, authors, title, doi, link, references, citations, date, usertags)
+        authors = map(Author, authors)
+        citations = map(Paper, citations)
+        references = map(Paper, references)
+        new(uuid, year, authors, title, doi, link, references, citations, date, usertags)
+    end
 end
 
 @with_kw struct Author
@@ -23,9 +32,25 @@ end
 
 symbolize(d::Dict{String}) = [Symbol(k)=>v for (k,v) in d]
 
-Paper(d::Dict{String}; kwargs...) = Paper(;symbolize(d)..., kwargs...)
-Author(d::Dict{String}) = Author(;symbolize(d)...)
-Author(; name::String=missing) = parseauthorname(name)
+function Paper(d::Dict{String}; kwargs...)
+    Paper(;symbolize(d)..., kwargs...)
+end
+
+Author(d::Dict{String}) = if haskey(d, "name") 
+        Author(d["name"])  # old db version
+    else 
+        Author(;symbolize(d)...) # new db version
+    end
+
+Author(name::String) = parseauthorname(name)
+
+function parsepaperauthor(p::Dict, as::Vector)::Paper
+	as = map(Author, as)
+	p  = Paper(p, authors = as)
+end
+
+# remove this
+#Author(; name::String=missing) = parseauthorname(name)
 
 function parseauthorname(s::String)
     try

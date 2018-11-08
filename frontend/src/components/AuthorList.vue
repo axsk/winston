@@ -1,7 +1,7 @@
 <template>
 <div>
   <template v-for="author, i in authors">
-      <a @click="clicked(author)" href=#>{{author | parseAuthor(format)}}</a>
+      <a @click.stop="clicked(author)" href=#>{{author | parseAuthor(format)}}</a>
       <button v-if="editable" @click="remove(i)">x</button>, 
   </template><br>
   <input v-if="editable" @keyup.enter="add" v-model="addition">
@@ -31,11 +31,10 @@ export default {
   },
   methods: {
     clicked: function(author){
-      this.$emit('click', author)
+      this.$root.$emit('viewAuthor', author)
     },
     add: function() {
-      if (this.authors == null) this.value = [];
-      alert(this.addition)
+      if (this.authors == null) this.value = []
       this.authors.push(this.addition)
       this.$emit('input', this.authors)
       this.addition = ""

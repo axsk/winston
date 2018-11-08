@@ -3,7 +3,7 @@
     <el-table-column label="Year" prop="year" width=100% sortable />
     <el-table-column label="Authors" width=180px sortable> 
       <template slot-scope="scope">
-        <authorlist :authors="scope.row.authors" @click="authorClick"/>
+        <authorlist :authors="scope.row.authors"/>
        </template>
     </el-table-column>
     <el-table-column label="Title" prop="title" sortable />
@@ -26,9 +26,7 @@ export default {
   methods: {
     selectRow: function (row, event, column){
       this.$emit('row-clicked', row)
-    },
-    authorClick: function(a){
-      //alert(a)
+      this.$root.$emit('viewPaper', row)
     }
   }
 }

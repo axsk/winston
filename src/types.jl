@@ -45,6 +45,7 @@ end
 
 function Author(d::Dict{String}; kwargs...) 
     if haskey(d, "name")
+        d = copy(d)
         family, given = parseauthorname(pop!(d,"name"))
         Author(;symbolize(d)..., family=family, given=given, kwargs...)
     else 

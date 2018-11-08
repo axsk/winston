@@ -234,7 +234,7 @@ end
 
 ### LEGACY ###
 
-clear!() = cypherQuery(c, "MATCH (n) DETACH DELETE n")
+#clear!() = cypherQuery(c, "MATCH (n) DETACH DELETE n")
 
 
 function add(p::Paper, owned=false)

@@ -17,7 +17,7 @@ import axios from 'axios'
 
 export default {
   props: {
-    value: {},
+    value: {type: Array, default: []},
     editable: {default: false},
     selectable: {default: false}
   },
@@ -28,11 +28,12 @@ export default {
     }
   },
   methods: {
-    remove: function (index) { 
+    remove: function (index) {
       this.value.splice(index,1)
       this.$emit('input', this.value)
     },
     add: function () {
+      if (this.value == null) this.value = [];
       this.value.push(this.newtag)
       this.$emit('input', this.value)
       this.newtag = ""

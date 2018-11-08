@@ -27,15 +27,20 @@ hasval(::Any) = true
 end
 
 @with_kw struct Author
-    uuid = -nothing
+    uuid = nothing
 	family = nothing
-	given = nothing
+    given = nothing
+    created = nothing
 end
 
 symbolize(d::Dict{String}) = [Symbol(k)=>v for (k,v) in d]
 
+function Paper(p::Paper, d::Dict{String}; kwargs...)
+    Paper(p; symbolize(d)..., kwargs...)
+end
+
 function Paper(d::Dict{String}; kwargs...)
-    Paper(;symbolize(d)..., kwargs...)
+    Paper(; symbolize(d)..., kwargs...)
 end
 
 function Author(d::Dict{String}; kwargs...) 

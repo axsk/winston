@@ -75,22 +75,23 @@ test_api_search()
 # UPDATES
 
 function syncpaper(p::Paper, user)
-	editpaper(p)
-	syncauthors(p)
+	p = editpaper(p)
+	syncauthors(p) # updating does not work on authors
 	synctags(p, user)
 end
 
 function editpaper(p::Paper)
+	id = p.uuid == nothing ? 0 : p.uuid
 	tx = transaction(c)
-	tx("MERGE (p:Paper {uuid: \$p.uuid})
+	tx("MERGE (p:Paper {uuid: \$id})
 		ON CREATE SET p.uuid = apoc.create.uuid(), p.created = datetime() " *
-		(hasval(p.title) ? "SET p.title = \$p.title " : "") *
-		(hasval(p.year)  ? "SET p.year = \$p.year " : "") *
+		(hasval(p.title) ? "SET p.title = \$title " : "") *
+		(hasval(p.year)  ? "SET p.year = \$year " : "") *
 		"RETURN p",
-		:p => p)
+		:id => id, :title => p.title, :year => p.year)
 	r = commit(tx)
 	
-	Paper(r.results[1]["data"][1]["row"][1])
+	Paper(p, r.results[1]["data"][1]["row"][1])
 end
 
 function syncauthors(p::Paper)
@@ -104,15 +105,15 @@ function syncauthors(p::Paper)
 	tx = transaction(c)
 	# TODO: not working with old style authors; FIX: use uuid
 	tx("MATCH (p:Paper {uuid: \$pid})
-		UNWIND \$authors as a
-		MATCH (p)-[r]-(:Author {uuid: a.uuid})
+		UNWIND \$authors as aa
+		MATCH (p)-[r]-(:Author {uuid: aa.uuid})
 		DELETE r",
 		:pid => pid, :authors => remove)
 	tx("MATCH (p:Paper {uuid: \$pid})
-		UNWIND \$authors as a
-		MERGE (aa:Author {uuid: a.uuid})
-		ON CREATE SET aa.uuid = apoc.create.uuid(), aa.created = datetime()
-		MERGE (p)<-[:wrote]-(aa)",
+		UNWIND \$authors as aa
+		MERGE (a:Author {family: aa.family, given: aa.given})
+		ON CREATE SET a.uuid = apoc.create.uuid(), a.created = datetime()
+		MERGE (p)<-[:wrote]-(a) RETURN a",
 		:pid => pid, :authors => add)
 	commit(tx)
 end
@@ -185,8 +186,8 @@ function syncauthors(pid, authors)
 	d = cypherQuery(c, "MATCH (:Paper {uuid: \$pid})--(a:Author) RETURN a.name", "pid" => pid)
 	dbauthors = get(d, 1, [])
 
-	@show add    = setdiff(authors, dbauthors)
-	@show remove = setdiff(dbauthors, authors)
+	add    = setdiff(authors, dbauthors)
+	remove = setdiff(dbauthors, authors)
 
 	tx = transaction(c)
 	tx("MATCH (p:Paper {uuid: \$pid})

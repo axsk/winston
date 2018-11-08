@@ -114,6 +114,15 @@ function crawl(args...; kwargs...)
 	end
 end
 
+function crawl(p::Paper)
+	if p.doi == nothing
+		p = search(title = p.title, year = p.year, author = string(p.authors))
+	else
+		p = search(p.doi)
+	end
+	s = SemanticScholar.getdoi(p.doi)
+	Paper(p, references=s.references, citations=s.citations)
+end
 
 function test()
 	crawl("10.1073/pnas.1618455114")

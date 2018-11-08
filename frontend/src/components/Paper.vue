@@ -3,9 +3,9 @@
   	<el-input v-model="paper.title" /><br>
   	<el-input v-model="paper.year" /><br>
   	Authors:
-    <taglist v-model="paper.authors" editable="true" />
+    <taglist v-model="paper.authors" :editable="true" />
   	Tags:
-    <taglist v-model="paper.usertags" editable="true" />
+    <taglist v-model="paper.usertags" :editable="true" />
     <button @click="save()">Save</button>
   </div>
 </template>

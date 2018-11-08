@@ -69,8 +69,8 @@ function parseauthorname(s::String)
     end
 end
 
-string(a::Author) = "$(a.given) $(a.family)"
-string(a::Vector{Author}) = join(map(string, a), ", ")
+Base.string(a::Author) = "$(a.given) $(a.family)"
+Base.string(a::Vector{Author}) = join(map(string, a), ", ")
 
 function isvalid(p::Paper)
     any(map(x->ismissing(getfield(p, x)), [:title, :year, :authors])) && return false

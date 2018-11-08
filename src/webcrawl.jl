@@ -34,7 +34,7 @@ module Crossref
 		parsedata(data)
 	end
 
-	function search(doi)
+	function search(doi::String)
 		local data
 		try
 			data = getworks(ids=doi)["message"]
@@ -45,6 +45,14 @@ module Crossref
 		end
 
 		parsedata(data)
+	end
+
+	function search(p::Paper)
+		if p.doi == nothing
+			search(title = p.title, year = p.year, author = string(p.authors))
+		else
+			search(p.doi)
+		end
 	end
 
 	function parsedata(items)
@@ -77,7 +85,7 @@ module SemanticScholar
 
 	function getdoi(doi)
 		global r = HTTP.request("GET", "http://api.semanticscholar.org/v1/paper/$doi?include_unknown_references=true")
-		global x=data = JSON.parse(String(r.body))
+		global x = data = JSON.parse(String(r.body))
 		w = parsepaper(data)
 	end
 
@@ -92,7 +100,7 @@ module SemanticScholar
 	end
 
 	parseauthors(data::Dict) = map(g(data, "authors")) do a
-		family, given = parseauthorname(a["name"]), 
+		family, given = parseauthorname(a["name"])
 		Author(family=family, given=given)
 	end
 end
@@ -114,12 +122,10 @@ function crawl(args...; kwargs...)
 	end
 end
 
+
+
 function crawl(p::Paper)
-	if p.doi == nothing
-		p = search(title = p.title, year = p.year, author = string(p.authors))
-	else
-		p = search(p.doi)
-	end
+	p = search(p)[1]
 	s = SemanticScholar.getdoi(p.doi)
 	Paper(p, references=s.references, citations=s.citations)
 end

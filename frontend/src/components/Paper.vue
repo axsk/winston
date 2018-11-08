@@ -3,7 +3,7 @@
   	<el-input v-model="paper.title" /><br>
   	<el-input v-model="paper.year" /><br>
   	Authors:
-    <taglist v-model="paper.authors" :editable="true" />
+    <authorlist :authors="paper.authors" format=full :editable="true" />
   	Tags:
     <taglist v-model="paper.usertags" :editable="true" />
     <button @click="save()">Save</button>
@@ -12,11 +12,12 @@
 
 <script>
 import axios from 'axios'
-import taglist from './Taglist.vue'
+import taglist from './TagList.vue'
+import authorlist from './AuthorList.vue'
 
 export default {
   components: {
-     taglist
+     taglist, authorlist
   },
   filters: {
     parseAuthors: function(as) {

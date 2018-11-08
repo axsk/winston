@@ -52,6 +52,11 @@ function Author(d::Dict{String}; kwargs...)
     end
 end
 
+function Author(s::String)
+    family, given = parseauthorname(s)
+    Author(family=family, given=given)
+end
+
 function parseauthorname(s::String)
     try
         i = findprev(" ", s, lastindex(s))

@@ -21,7 +21,7 @@
 
 <script>
 import axios from 'axios'
-import taglist from './Taglist.vue'
+import taglist from './TagList.vue'
 
 export default {
   components: {

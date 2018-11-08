@@ -7,7 +7,7 @@
         @close="remove(index)">
         {{tag}}
       </el-tag>
-    </span>
+    </span><br>
     <input v-if="editable" v-model="newtag" @keyup.enter="add">
   </div>
 </template>

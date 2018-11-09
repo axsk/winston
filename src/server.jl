@@ -36,7 +36,7 @@ global d
 @app app = (Mux.defaults, Muxify,
 	#page("/", req->getpapers() |> json |> addHeader),
 	page("/papers", req->(api_search(req[:jq]) |> json |> addHeader)),
-	page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
+	#page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
 	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
 	page("/editpaper", req->editpaper(req)|>json|>addHeader),
 	Mux.notfound())

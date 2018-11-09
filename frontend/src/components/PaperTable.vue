@@ -16,7 +16,6 @@
 </template>
 
 <script>
-import axios from 'axios'
 import authorlist from './AuthorList.vue'
 import taglist from './TagList.vue'
 

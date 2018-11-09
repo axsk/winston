@@ -22,6 +22,9 @@ hasval(::Any) = true
         authors = map(Author, authors)
         citations = map(Paper, citations)
         references = map(Paper, references)
+        if created == nothing
+            created = date
+        end
         new(uuid, year, authors, title, doi, link, references, citations, date, created, usertags)
     end
 end

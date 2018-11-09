@@ -8,7 +8,7 @@ end
 c = connect()
 
 ### ATOMIC GETS
-
+#=
 function loaduuid(uuid::String)::Paper
 	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})--(a:Author) return p, collect(a) as a", :uid => uuid)
 	Paper(d[1,1], authors = d[1,2])
@@ -19,12 +19,8 @@ function loadrefs(p::Paper)::Paper
 	refs = [Paper(d[i,1], authors = d[i,2]) for i in 1:size(d,1)]
 	Paper(p, references = refs)
 end
+=#
 
-function test_atoms()
-	uuid = "1"
-	p = loaduuid(uuid)
-	loadrefs(p)
-end
 
 ### SEARCH
 
@@ -70,59 +66,52 @@ function api_search(query::String, user::String, usertags::Vector)
 end
 
 test_api_search() = api_search("", "Alex", ["Library"])
-test_api_search()
+#test_api_search()
+
+function getusertags(user)
+	d = cypherQuery(c, "MATCH (u:User {name: \$user})--(tt:Tagging)--(t:Tag) RETURN t.name, count(t) as c ORDER BY c DESC",
+		"user" => user)
+	get(d, 1, [])
+end
+
+function authorpapers(author::Author)::Vector{Paper}
+	d = cypherQuery(c,
+		"MATCH (p:Paper)-(a:Author {uuid: \$aid}) RETURN p",
+		:aid => author.uuid)
+	map(Paper, d[1])
+end
 
 # UPDATES
 
 function syncpaper(p::Paper, user)
-	p = editpaper(p)
-	syncauthors(p) # updating does not work on authors
-	synctags(p, user)
+	pid = p.uuid == nothing ? create(p).uuid : update(p).uuid
+	syncauthors(pid, p.authors)
+	synctags(pid, p.usertags, user)
+	#TODO: syncrefs, synccits
 end
 
-function editpaper(p::Paper)
-	id = p.uuid == nothing ? 0 : p.uuid
+function syncauthors(pid, authors::Vector{Author})
+	authors == nothing && return
+
+	aids = map(authors) do a
+		a.uuid == nothing ? create(a).uuid : update(a).uuid
+	end
+
 	tx = transaction(c)
-	tx("MERGE (p:Paper {uuid: \$id})
-		ON CREATE SET p.uuid = apoc.create.uuid(), p.created = datetime() " *
-		(hasval(p.title) ? "SET p.title = \$title " : "") *
-		(hasval(p.year)  ? "SET p.year = \$year " : "") *
-		"RETURN p",
-		:id => id, :title => p.title, :year => p.year)
-	r = commit(tx)
-	
-	Paper(p, r.results[1]["data"][1]["row"][1])
+	tx("MATCH (p:Paper {uuid: \$pid})-[r]-(:Author) DELETE r",
+		:pid => pid)
+	tx("MATCH (p:Paper {uuid: \$pid}) WITH p
+		UNWIND range(1, size(\$aids)) AS i
+		MATCH (a:Author {uuid: \$aids[i-1]})
+		CREATE (a)-[:wrote {position: i}]->(p)",
+		:pid => pid, :aids => aids)
+	e = commit(tx).errors
+	length(e) > 0 && throw(e)
+	true
 end
 
-function syncauthors(p::Paper)
-	pid = p.uuid
-	d = cypherQuery(c, "MATCH (:Paper {uuid: \$pid})--(a:Author) RETURN a", :pid => pid)
-
-	dbauthors = map(Author, get(d, 1, []))
-	add    = setdiff(p.authors, dbauthors)
-	remove = setdiff(dbauthors, p.authors)
-	
-	tx = transaction(c)
-	# TODO: not working with old style authors; FIX: use uuid
-	tx("MATCH (p:Paper {uuid: \$pid})
-		UNWIND \$authors as aa
-		MATCH (p)-[r]-(:Author {uuid: aa.uuid})
-		DELETE r",
-		:pid => pid, :authors => remove)
-	tx("MATCH (p:Paper {uuid: \$pid})
-		UNWIND \$authors as aa
-		MERGE (a:Author {family: aa.family, given: aa.given})
-		ON CREATE SET a.uuid = apoc.create.uuid(), a.created = datetime()
-		MERGE (p)<-[:wrote]-(a) RETURN a",
-		:pid => pid, :authors => add)
-	commit(tx)
-end
-
-function synctags(paper, user)
-	pid = paper.uuid
-	tags = paper.usertags
-
-	hasval(tags) || return
+function synctags(pid, tags, user)
+	tags == nothing && return
 
 	d = cypherQuery(c,
 		"MATCH (u:User {name: \$user})--(tt:Tagging)--(p:Paper {uuid: \$pid}),
@@ -150,11 +139,86 @@ function synctags(paper, user)
 			(u)--(tt)--(p), (tt)--(t)
 		DETACH DELETE tt",
 		"user" => user, "pid" => pid, "tags" => remove)
-	commit(tx)
+	e = commit(tx).errors
+	length(e) > 0 && throw(e)
+	true
+end
+
+function syncreferences(p::Paper)
+	p.references == nothing && return
+	# we probably dont need the update below
+	ids = map(p.references) do x
+		x.uuid == nothing ? create(x).uuid : update(x).uuid
+	end
+	cypherQuery(c, 
+		"MATCH (p:Paper {uuid: \$pid})
+		UNWIND \$ids as id
+		MERGE (:Paper {uuid: id})<-[:referenced]-(p)",
+		:pid = p.uuid, :ids => ids)
+end
+
+function synccitations(p::Paper)
+	p.citations == nothing && return
+	# we probably dont need the update below
+	ids = map(p.citations) do x
+		x.uuid == nothing ? create(x).uuid : update(x).uuid
+	end
+	cypherQuery(c, 
+		"MATCH (p:Paper {uuid: \$pid})
+		UNWIND \$ids as id
+		MERGE (:Paper {uuid: id})-[:referenced]->(p)",
+		:pid = p.uuid, :ids => ids)
+end
+	
+# object mappers, also giving merge
+
+Node = Union{Paper, Author}
+typedict(x::T, fields=fieldnames(T)) where T = Dict(f=>getfield(x, f) for f in fields) 
+selector(n::Node) = "$(label(n)) {uuid: $(n.uuid)}"
+
+label(a::Author) = ":Author"
+node(a::Author) = typedict(a)
+Base.convert(::Type{Author}, d::Dict) = Author(d)
+
+label(p::Paper) = ":Paper"
+node(p::Paper) = typedict(p, [:uuid, :year, :title, :doi, :link, :created])
+Base.convert(::Type{Paper}, d::Dict) = Paper(d)
+
+function create(n::Node)
+	d = cypherQuery(c,
+		"CREATE (n$(label(n))) SET n+=\$n,
+		n.uuid = apoc.create.uuid(),
+		n.created = datetime() RETURN n",
+		:n => node(n))
+	convert(typeof(n), d[1,1])
+end
+
+# note that += doesnt remove properties
+function update(n::Node)
+	d = cypherQuery(c,
+		"MATCH (n$(label(n)) {uuid: \$n.uuid}) SET n+=\$n RETURN n",
+		:n => node(n))
+	convert(typeof(n), d[1,1])
+end
+
+function mergenodes(master::Node, slave::Node)
+	d = cypherQuery(c,
+		"MATCH (m$(label(master)) {uuid: \$id1)}),
+		       (s$(label(slave))  {uuid: \$id2)})
+		CALL apoc.refactor.mergeNodes([m,s], {properties:'discard', mergeRels:true}) YIELD n",
+		:id1 => master.uuid, :id2 => slave.uuid)
+	convert(typeof(n), d[1,1])
+end
+
+function delete(n::Node)
+	cypherQuery(c,
+		"MATCH (n$(label(n)) {uuid: \$id})) DETACH DELETE",
+		:id => n.uuid)
+	nothing
 end
 
 ### LEGACY GETS
-
+#=
 function getpaper(id)
 	tx = transaction(c)
 	tx("MATCH (p:Paper {uuid:\$uuid})
@@ -165,12 +229,6 @@ function getpaper(id)
 	   "uuid" => id)
 	r = commit(tx)
 	row = r.results[1]["data"][1]["row"]
-end
-
-function getusertags(user)
-	d = cypherQuery(c, "MATCH (u:User {name: \$user})--(tt:Tagging)--(t:Tag) RETURN t.name, count(t) as c ORDER BY c DESC",
-		"user" => user)
-	get(d, 1, [])
 end
 
 ### LEGACY WRITES
@@ -287,3 +345,4 @@ function addtag(user::String, p::Paper, tag::String)
 	    "user" => user, "year" => p.year, "title" => p.title, "tag" => tag)
 	commit(tx)
 end
+=#

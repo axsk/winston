@@ -16,6 +16,9 @@ module Crossref
 	getworks = cr[:works]
 
 	function search(;query=nothing, year=nothing, author=nothing, title=nothing, limit=1)
+		year == "" && (year = nothing)
+		author == "" && (author = nothing)
+		title == "" && (title = nothing)
 		local data
 		try
 			data = getworks(
@@ -125,13 +128,47 @@ end
 
 
 function crawl(p::Paper)
-	p = search(p)[1]
-	s = SemanticScholar.getdoi(p.doi)
-	Paper(p, references=s.references, citations=s.citations)
+	@info "\ncrawling $p"
+	n = p
+
+	try
+		n = search(p)[1]
+	catch
+		@warn "CrossRef error"
+	end
+
+	try
+		s = SemanticScholar.getdoi(n.doi)
+		n = Paper(s, references=s.references, citations=s.citations)
+	catch
+		@warn "SemanticScholar error"
+		n
+	end
+	if issame(p, n)
+		@info "matched $n"
+	else
+		@warn "reject $n"
+	end
 end
 
 function test()
 	crawl("10.1073/pnas.1618455114")
+end
+
+using StringDistances
+
+function issame(p1::Paper, p2::Paper)
+	authorstring(a::Vector{Author}) = join(authorstring.(a), " ")	
+	authorstring(a::Author) = "$(a.given) $(a.family)"
+	paperstring(p::Paper) = "$(p.year) $(authorstring(p.authors)) $(p.title)"
+	ss = filter.(isascii, lowercase.(paperstring.([p1, p2])))
+	score = compare(TokenMax(RatcliffObershelp()), ss[1], ss[2])
+	if score < 0.95 
+		@warn "  Score $score"
+	else
+		@info "  Score $score"
+	end
+	score < 0.8 ? false : true
 end
 
 end

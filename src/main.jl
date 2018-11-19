@@ -1,10 +1,11 @@
-import Base.map
-map(f, s::AbstractSet) = Set([f(s) for s in s])
+Base.map(f, s::AbstractSet) = Set([f(s) for s in s])
 
-include("types.jl")
+using Revise
 
-include("webcrawl.jl")
-include("neo.jl")
+includet("types.jl")
 
-include("server.jl")
-include("cermine.jl")
+includet("webcrawl.jl")
+includet("neo.jl")
+
+includet("server.jl")
+includet("cermine.jl")

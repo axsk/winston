@@ -8,12 +8,12 @@ end
 c = connect()
 
 ### ATOMIC GETS
-#=
+
 function loaduuid(uuid::String)::Paper
 	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})--(a:Author) return p, collect(a) as a", :uid => uuid)
 	Paper(d[1,1], authors = d[1,2])
 end
-
+#=
 function loadrefs(p::Paper)::Paper
 	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})-[:referenced]->(r:Paper)--(a:Author) return r, collect(a) as a", :uid => p.uuid)
 	refs = [Paper(d[i,1], authors = d[i,2]) for i in 1:size(d,1)]
@@ -154,7 +154,7 @@ function syncreferences(p::Paper)
 		"MATCH (p:Paper {uuid: \$pid})
 		UNWIND \$ids as id
 		MERGE (:Paper {uuid: id})<-[:referenced]-(p)",
-		:pid = p.uuid, :ids => ids)
+		:pid => p.uuid, :ids => ids)
 end
 
 function synccitations(p::Paper)
@@ -167,7 +167,7 @@ function synccitations(p::Paper)
 		"MATCH (p:Paper {uuid: \$pid})
 		UNWIND \$ids as id
 		MERGE (:Paper {uuid: id})-[:referenced]->(p)",
-		:pid = p.uuid, :ids => ids)
+		:pid => p.uuid, :ids => ids)
 end
 	
 # object mappers, also giving merge

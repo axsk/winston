@@ -65,6 +65,23 @@ function api_search(query::String, user::String, usertags::Vector)
 	end
 end
 
+using Base64
+
+function savepdf(pid, data::Vector{UInt8})
+	cypherQuery(c, "
+		MATCH (p:Paper {uuid: \$pid}) 
+		CREATE (f:File {data: \$data, 
+					   created: datetime(),
+					   uuid: apoc.create.uuid()}),
+			(p)-[:has]->(f)",
+		:pid => pid, :data => data)
+end
+
+function loadpdf(uuid)
+	d = cypherQuery(c, "MATCH (f:File {uuid: \$uuid}) RETURN f.data")
+	Vector{UInt8}(d[1][1])
+end
+
 test_api_search() = api_search("", "Alex", ["Library"])
 #test_api_search()
 

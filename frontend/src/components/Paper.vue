@@ -6,7 +6,9 @@
     <authorlist :authors="paper.authors" format=full :editable="true" />
   	Tags:
     <taglist v-model="paper.usertags" :editable="true" />
-    <button @click="save()">Save</button>
+    <button @click="save()">Save</button><br>
+    <upload />
+    <viewpdf pid="paper.uuid"/>
   </div>
 </template>
 
@@ -14,10 +16,12 @@
 import axios from 'axios'
 import taglist from './TagList.vue'
 import authorlist from './AuthorList.vue'
+import viewpdf from './ViewPDF2.vue'
+import upload from './Upload.vue'
 
 export default {
   components: {
-     taglist, authorlist
+     taglist, authorlist, viewpdf, upload
   },
   filters: {
     parseAuthors: function(as) {

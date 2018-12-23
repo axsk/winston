@@ -11,9 +11,9 @@
         <author v-if="selection.type == 'author'" :author="selection.value" />
       </el-dialog>
       <paper-table :papers="paperData"/>
+      
     </el-main>
   </el-container>
-
   </div>
 </template>
 

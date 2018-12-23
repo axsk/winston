@@ -33,12 +33,33 @@ end
 
 global d
 
+pdffile =  "/Users/alex/Documents/Paper/PhD/ihpFBSDE.pdf"
+
+pdfresponse(data::Vector{UInt8}) = Dict(
+	:headers => HTTP.Headers([
+		"Content-Type" => "application/pdf",
+		"Access-Control-Allow-Origin" => "*",
+		"Access-Control-Allow-Methods" => "*",
+		"Access-Control-Allow-Headers" => "*"]),
+	:body => data) 
+
+using Base64: stringmime
 @app app = (Mux.defaults, Muxify,
 	#page("/", req->getpapers() |> json |> addHeader),
 	page("/papers", req->(api_search(req[:jq]) |> json |> addHeader)),
 	#page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
 	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
 	page("/editpaper", req->editpaper(req)|>json|>addHeader),
+	page("/pdf/:id", req->pdfresponse(loadpdf(req[:params][:id]))),
+	page("/uploadpaper/", req -> 
+		if req[:method] == "OPTIONS"
+			""|>addHeader
+		else
+			pid = get(req[:query], :pid, nothing)
+			pdf = req[:data]
+			savepdf(pid, pdf)
+			""|>addHeader
+		end),
 	Mux.notfound())
 
 function api_search(d::Dict)

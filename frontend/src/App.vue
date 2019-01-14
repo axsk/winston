@@ -7,11 +7,14 @@
     </el-aside></div>
     <el-main>
       <el-dialog :visible.sync="dialogVisible" title="Edit">
-        <Paper v-if="selection.type == 'paper'" :paper="selection.value" />
         <author v-if="selection.type == 'author'" :author="selection.value" />
       </el-dialog>
-      <paper-table :papers="paperData"/>
-      
+      <el-tabs :value.sync="currenttab">
+        <el-tab-pane label="Search">
+          <paper-table :papers="paperData"/></el-tab-pane>
+        <el-tab-pane label="Paper">
+          <Paper v-if="selection.type == 'paper'" :paper="selection.value" /></el-tab-pane>
+      </el-tabs>
     </el-main>
   </el-container>
   </div>
@@ -37,7 +40,8 @@ export default {
     return {
       selection: {},
       dialogVisible: false,
-      paperData: []
+      paperData: [],
+      currenttab: 0
     }
   },
   methods: {
@@ -56,7 +60,7 @@ export default {
     })
     this.$root.$on('viewPaper', (paper) => {
       this.selection = {type: 'paper', value: paper}
-      this.dialogVisible = true
+      this.currenttab = "1"
     })
   }
 }

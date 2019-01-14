@@ -65,21 +65,46 @@ function api_search(query::String, user::String, usertags::Vector)
 	end
 end
 
+### PDF
 using Base64
 
 function savepdf(pid, data::Vector{UInt8})
-	cypherQuery(c, "
+	d = cypherQuery(c, "
 		MATCH (p:Paper {uuid: \$pid}) 
 		CREATE (f:File {data: \$data, 
 					   created: datetime(),
 					   uuid: apoc.create.uuid()}),
-			(p)-[:has]->(f)",
+			(p)-[:has]->(f)
+		RETURN f.uuid",
 		:pid => pid, :data => data)
+	return (size(d,1) == 1)
 end
 
 function loadpdf(uuid)
-	d = cypherQuery(c, "MATCH (f:File {uuid: \$uuid}) RETURN f.data")
-	Vector{UInt8}(d[1][1])
+	d = cypherQuery(c, "MATCH (f:File)<-[:has]-(p:Paper {uuid: \$uuid}) RETURN f.data", :uuid => uuid)
+	try 
+		Vector{UInt8}(d[1][1])
+	catch
+		UInt8[]
+	end
+end
+
+### COMMENTS
+
+function addcomment(pid, user, text)
+	d = cypherQuery(c, "
+		MATCH (p:Paper: {uuid: \$pid}), (u:User {name: \$user})
+		CREATE (u)-[:wrote]->(c:Comment {text: \$text, created: datetime()})-[:on]->(p)
+		RETURN c",
+		:pid => pid, :user => user, :text => text)
+	return (size(d,1) == 1)
+end
+
+function getcomments(pid)
+	d = cypherQuery(c, 
+		"MATCH (p:Paper {uuid: \$pid})--(c:Comment) RETURN c",
+		:pid => pid)
+	return d[1]
 end
 
 test_api_search() = api_search("", "Alex", ["Library"])

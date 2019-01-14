@@ -35,6 +35,8 @@ global d
 
 pdffile =  "/Users/alex/Documents/Paper/PhD/ihpFBSDE.pdf"
 
+using HTTP
+
 pdfresponse(data::Vector{UInt8}) = Dict(
 	:headers => HTTP.Headers([
 		"Content-Type" => "application/pdf",
@@ -51,11 +53,11 @@ using Base64: stringmime
 	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
 	page("/editpaper", req->editpaper(req)|>json|>addHeader),
 	page("/pdf/:id", req->pdfresponse(loadpdf(req[:params][:id]))),
-	page("/uploadpaper/", req -> 
+	page("/uploadpaper/:id", req -> 
 		if req[:method] == "OPTIONS"
 			""|>addHeader
 		else
-			pid = get(req[:query], :pid, nothing)
+			@show pid = req[:params][:id]
 			pdf = req[:data]
 			savepdf(pid, pdf)
 			""|>addHeader

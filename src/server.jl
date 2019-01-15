@@ -43,7 +43,7 @@ pdfresponse(data::Vector{UInt8}) = Dict(
 		"Access-Control-Allow-Origin" => "*",
 		"Access-Control-Allow-Methods" => "*",
 		"Access-Control-Allow-Headers" => "*"]),
-	:body => data) 
+	:body => data)
 
 using Base64: stringmime
 @app app = (Mux.defaults, Muxify,
@@ -62,7 +62,31 @@ using Base64: stringmime
 			savepdf(pid, pdf)
 			""|>addHeader
 		end),
+	page("/comment", req->(
+		if req[:method] == "OPTIONS"
+			""|>addHeader
+		elseif req[:method] == "PUT"
+			mergehighlights(req)
+		elseif req[:method] == "GET"
+			@show req
+			gethighlights(req[:query])
+		end
+		)),
 	Mux.notfound())
+
+function mergehighlights(req)
+	s = JSON.parse(String(req[:data]))
+	map(get(s, "highlights", [])) do h
+		puthighlight(s["pid"], "Alex", h) end
+	map(get(s, "notes", [])) do n
+		putnote(s["pid"], "Alex", n) end
+	""|>addHeader
+end
+
+function gethighlights(q)
+	Dict("highlights" => gethighlights(q["pid"], "Alex"),
+		 "comments"   => getcomments(q["pid"], "Alex"))|> json |> addHeader
+end
 
 function api_search(d::Dict)
 	api_search(d["query"], d["user"], d["usertags"])

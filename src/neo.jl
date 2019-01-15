@@ -107,6 +107,44 @@ function getcomments(pid)
 	return d[1]
 end
 
+function puthighlight(pid, user, highlight)
+	d = cypherQuery(c,
+		"MATCH (p:Paper {uuid: \$pid}), (u:User {name: \$user})
+		MERGE (u)-[:selects]->(h:Highlight {location: \$loc})-[:selects]->(p)
+		ON CREATE SET
+		h.uuid = apoc.create.uuid(),
+		h.created = datetime(),
+		h.text = \$text
+		RETURN h",
+		:pid => pid, :user => user, :loc => highlight["location"], :text => highlight["text"])[1]
+end
+
+function putnote(pid, user, note)
+	d = cypherQuery(c,
+		"MATCH (p:Paper {uuid: \$pid}), (u:User {name: \$user})
+		MERGE (u)-[:wrote]->(c:Comment {location: \$loc})-[:on]->(p)
+		ON CREATE SET
+		c.uuid = apoc.create.uuid(),
+		c.created = datetime()
+		SET c.text = \$text
+		RETURN c",
+		:pid => pid, :user => user, :loc => note["location"], :text => note["text"])[1]
+end
+
+function gethighlights(pid, user)
+	d = cypherQuery(c,
+		"MATCH (p:Paper {uuid: \$pid})--(h:Highlight)--(u:User {name: \$user}) RETURN h",
+		:pid => pid, :user => user)
+	get(d, 1, [])
+end
+
+function getcomments(pid, user)
+	d = cypherQuery(c,
+		"MATCH (p:Paper {uuid: \$pid})--(c:Comment)--(u:User {name: \$user}) RETURN c",
+		:pid => pid, :user => user)
+	get(d, 1, [])
+end
+
 test_api_search() = api_search("", "Alex", ["Library"])
 #test_api_search()
 

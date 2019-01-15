@@ -2,7 +2,7 @@
   <div id="app">
   <el-container>
     <div class="sticky-top">
-    <el-aside>
+    <el-aside width=180px>
         <Search @result="update"/>
     </el-aside></div>
     <el-main>

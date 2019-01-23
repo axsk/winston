@@ -80,6 +80,20 @@ function savepdf(pid, data::Vector{UInt8})
 	return (size(d,1) == 1)
 end
 
+#=
+function savepdf(pid, data::Vector{UInt8})
+	if pid == 0
+		mktempdir() do dir
+			open("$dir/file.pdf", "w") do f
+				write(f, data)
+			end
+			run(`java -cp cermine-impl-1.13-jar-with-dependencies.jar pl.edu.icm.cermine.ContentExtractor -path $dir -outputs jats`)
+			Cermine.addfile("$dir/file.cermxml")
+		end
+	end
+end
+=#
+
 function loadpdf(uuid)
 	d = cypherQuery(c, "MATCH (f:File)<-[:has]-(p:Paper {uuid: \$uuid}) RETURN f.data", :uuid => uuid)
 	try 

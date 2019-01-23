@@ -1,3 +1,15 @@
+function parsepdf(data::Vector{UInt8})
+	dir = mktempdir()
+		@show dir
+		open("$dir/file.pdf", "w") do f
+			write(f, data)
+		end
+		@show "written, now in $(pwd())"
+		@show run(`java -cp cermine-impl-1.13-jar-with-dependencies.jar pl.edu.icm.cermine.ContentExtractor -path $dir -outputs jats`)
+		addfile("$dir/file.cermxml")
+	
+end
+
 function addfile(filename)
 	if endswith(filename, ".pdf")
 		y, as, t = match(r"(\d+) - (.*?) - (.*).pdf", file).captures

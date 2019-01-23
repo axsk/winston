@@ -20,7 +20,9 @@ function Muxify(app, req)
 	app(req)
 end
 
-function addHeader(res)
+addHeader(res) = addCORS(res)
+	#=
+	return addCORS(res)
 	headers  = HttpCommon.headers()
 	headers["Access-Control-Allow-Origin"] = "*"
 	headers["Access-Control-Allow-Methods"] = "*"
@@ -28,7 +30,20 @@ function addHeader(res)
 	Dict(
 	     :headers => headers,
 	     :body => res
-	     )
+		 )
+end
+	=#
+
+function addCORS(res)
+	res = Dict(:body => res, :headers => HTTP.Headers())
+	addCORS(res)
+end
+
+function addCORS(res::Dict)
+	for x in ["Origin", "Methods", "Headers"]
+		push!(res[:headers], "Access-Control-Allow-$x" => "*")
+	end
+	res
 end
 
 global d
@@ -45,10 +60,11 @@ pdfresponse(data::Vector{UInt8}) = Dict(
 		"Access-Control-Allow-Headers" => "*"]),
 	:body => data)
 
+
 using Base64: stringmime
 @app app = (Mux.defaults, Muxify,
 	#page("/", req->getpapers() |> json |> addHeader),
-	page("/papers", req->(api_search(req[:jq]) |> json |> addHeader)),
+	page("/papers", handlePaper),
 	#page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
 	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
 	page("/editpaper", req->editpaper(req)|>json|>addHeader),
@@ -73,6 +89,18 @@ using Base64: stringmime
 		end
 		)),
 	Mux.notfound())
+
+
+function handlePaper(req)
+	method = req[:method]
+	if method == "GET"
+		req->(api_search(req[:jq]) |> json)
+	elseif method == "POST"
+		req -> create(Paper()) |> json
+	elseif method == "PUT"
+		req -> editpaper(req) |> json
+	end
+end
 
 function mergehighlights(req)
 	s = JSON.parse(String(req[:data]))

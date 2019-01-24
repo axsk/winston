@@ -10,7 +10,7 @@
         <el-button @click="loadData">load</el-button>
         <el-button @click="saveAll">save</el-button>
         <div v-for="note in notes" :style="{top: note.offset+'px', position:'absolute'}">
-            <el-input type="textarea" size="mini" placeholder="Please input" v-model="note.text"/> 
+            <el-input type="textarea" autosize size="tiny" placeholder="Please input" v-model="note.text"/> 
         </div>
     </el-aside> 
 </el-container>

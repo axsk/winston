@@ -53,7 +53,7 @@ export default {
   				query: this.searchquery
   			})
   		axios
-			.get('http://localhost:8000/papers?json='+jq)
+			.get('http://localhost:8000/search?json='+jq)
 			.then(response => (this.result = response.data))
       		.finally(() => this.$emit('result', this.result))
   	}

@@ -1,10 +1,11 @@
 <template>
   <div>
-    <span v-for="tag, index in value" @click="toggle(tag)">
+    <span v-for="tag, index in value" >
       <el-tag  
         v-bind:class="[selected.has(tag) ? 'sel' : '']"
         :closable="editable"
-        @close="remove(index)">
+        @close="remove(index)"
+        @click="toggle(tag)">
         {{tag}}
       </el-tag>
     </span><br>
@@ -16,7 +17,7 @@
 
 export default {
   props: {
-    value: {type: Array, default: []},
+    value: {type: Array, default: ()=>{[]}},
     editable: {default: false},
     selectable: {default: false}
   },

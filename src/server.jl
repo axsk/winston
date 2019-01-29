@@ -8,8 +8,6 @@ using HttpCommon
 # TODO: use this
 function MuxHeaders(app, req)
 	res = app(req)
-	@show typeof(res)
-	@show req
 	addHeader(res)
 end
 
@@ -17,22 +15,10 @@ function Muxify(app, req)
 	req[:query] = HttpCommon.parsequerystring(req[:query])
 	jq = get(req[:query], "json", "{}") # parse ?json= field
 	req[:jq] = JSON.parse(jq)
-	app(req)
+	addCORS(app(req))
 end
 
 addHeader(res) = addCORS(res)
-	#=
-	return addCORS(res)
-	headers  = HttpCommon.headers()
-	headers["Access-Control-Allow-Origin"] = "*"
-	headers["Access-Control-Allow-Methods"] = "*"
-	headers["Access-Control-Allow-Headers"] = "*"
-	Dict(
-	     :headers => headers,
-	     :body => res
-		 )
-end
-	=#
 
 function addCORS(res)
 	res = Dict(:body => res, :headers => HTTP.Headers())
@@ -54,33 +40,31 @@ using HTTP
 
 pdfresponse(data::Vector{UInt8}) = Dict(
 	:headers => HTTP.Headers([
-		"Content-Type" => "application/pdf",
-		"Access-Control-Allow-Origin" => "*",
-		"Access-Control-Allow-Methods" => "*",
-		"Access-Control-Allow-Headers" => "*"]),
+		"Content-Type" => "application/pdf"]),
 	:body => data)
 
 
 using Base64: stringmime
 @app app = (Mux.defaults, Muxify,
 	#page("/", req->getpapers() |> json |> addHeader),
-	page("/papers", handlePaper),
+	page("/search", req->handleSearch(req)),
+	page("/paper/:id", req->handlePaper(req)),
 	#page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
-	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json |> addHeader)),
-	page("/editpaper", req->editpaper(req)|>json|>addHeader),
+	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json)),
+	page("/editpaper", req->editpaper(req)|>json),
 	page("/pdf/:id", req->pdfresponse(loadpdf(req[:params][:id]))),
 	page("/uploadpaper/:id", req -> 
 		if req[:method] == "OPTIONS"
-			""|>addHeader
+			""
 		else
 			@show pid = req[:params][:id]
 			pdf = req[:data]
 			savepdf(pid, pdf)
-			""|>addHeader
+			""
 		end),
 	page("/comment", req->(
 		if req[:method] == "OPTIONS"
-			""|>addHeader
+			""
 		elseif req[:method] == "PUT"
 			mergehighlights(req)
 		elseif req[:method] == "GET"
@@ -90,11 +74,15 @@ using Base64: stringmime
 		)),
 	Mux.notfound())
 
+function handleSearch(req)
+	api_search(req[:jq]) |> json
+end
+
 
 function handlePaper(req)
 	method = req[:method]
 	if method == "GET"
-		req->(api_search(req[:jq]) |> json)
+		loaduuid(convert(String, req[:params][:id])) |> json
 	elseif method == "POST"
 		req -> create(Paper()) |> json
 	elseif method == "PUT"
@@ -108,12 +96,12 @@ function mergehighlights(req)
 		puthighlight(s["pid"], "Alex", h) end
 	map(get(s, "notes", [])) do n
 		putnote(s["pid"], "Alex", n) end
-	""|>addHeader
+	""
 end
 
 function gethighlights(q)
 	Dict("highlights" => gethighlights(q["pid"], "Alex"),
-		 "comments"   => getcomments(q["pid"], "Alex"))|> json |> addHeader
+		 "comments"   => getcomments(q["pid"], "Alex"))|> json
 end
 
 function api_search(d::Dict)

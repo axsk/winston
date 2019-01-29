@@ -26,6 +26,7 @@ export default {
     selectRow: function (row, event, column){
       this.$emit('row-clicked', row)
       this.$root.$emit('viewPaper', row)
+      this.$router.push('/paper/'+row.uuid)
     }
   }
 }

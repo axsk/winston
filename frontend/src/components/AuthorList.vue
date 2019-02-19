@@ -1,11 +1,11 @@
 <template>
-<div>
+<span>
   <template v-for="author, i in authors">
       <a @click.stop="clicked(author)" href=#>{{author | parseAuthor(format)}}</a>
       <button v-if="editable" @click="remove(i)">x</button>, 
   </template><br>
   <input v-if="editable" @keyup.enter="add" v-model="addition">
-</div>
+</span>
 </template>
 
 <script>

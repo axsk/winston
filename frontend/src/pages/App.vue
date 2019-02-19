@@ -1,9 +1,7 @@
 <template>
   <div id="app">
-    <el-tabs>
-      <el-tab-pane label="Search" @tab-click="this.$router.push('search')"/>
-      <el-tab-pane label="Paper" @tab-click="gopaper" />
-    </el-tabs>
+    <router-link to="/search">Search</router-link>
+    <router-link to="/paper/new">New</router-link>
     <router-view></router-view>
   </div>
 </template>

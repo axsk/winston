@@ -12,6 +12,8 @@
         <taglist :value="scope.row.usertags" />
       </template>
     </el-table-column>
+    <el-table-column label="First" prop="editfirst" sortable :sort-method="mysortfirst"/>
+    <el-table-column label="Last"  prop="editlast"  sortable :sort-method="mysortlast"/>
   </el-table>
 </template>
 
@@ -27,6 +29,25 @@ export default {
       this.$emit('row-clicked', row)
       this.$root.$emit('viewPaper', row)
       this.$router.push('/paper/'+row.uuid)
+    },
+    mysortlast: function(a,b){return this.mysort(a.editlast, b.editlast)},
+    mysortfirst: function(a,b){return this.mysort(a.editfirst, b.editfirst)},
+    mysort: function(a,b){
+      if (a === null) return 1
+      else if (b === null) return -1
+      else if (a === b) return 0
+      return a < b ? -1 : 1
+    }
+  },
+  computed:{
+    mylast()  {return this.papers.map(x=>(x.editlast  == null ? "" : x.editlast))},
+    myfirst() {return this.papers.map(x=>(x.editfirst == null ? "" : x.editfirst))}
+  },
+  filters: {
+    formatdate: function (datetime) {
+      var d = Date.parse(datetime)
+      return "b"
+      return d.getDate()
     }
   }
 }

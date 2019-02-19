@@ -13,7 +13,7 @@
 
 <script>
 import Search from "../components/Search.vue";
-import PaperTable from "../components/PaperTable.vue";
+import PaperTable from "../components/PaperTable2.vue";
 
 export default {
   name: "app",

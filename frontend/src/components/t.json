@@ -1,0 +1,316 @@
+{
+    "status": "ok",
+    "message-type": "work",
+    "message-version": "1.0.0",
+    "message": {
+        "indexed": {
+            "date-parts": [
+                [
+                    2019,
+                    2,
+                    12
+                ]
+            ],
+            "date-time": "2019-02-12T22:54:54Z",
+            "timestamp": 1550012094138
+        },
+        "reference-count": 22,
+        "publisher": "American Physical Society (APS)",
+        "issue": "6",
+        "license": [
+            {
+                "URL": "http:\/\/link.aps.org\/licenses\/aps-default-license",
+                "start": {
+                    "date-parts": [
+                        [
+                            2007,
+                            12,
+                            6
+                        ]
+                    ],
+                    "date-time": "2007-12-06T00:00:00Z",
+                    "timestamp": 1196899200000
+                },
+                "delay-in-days": 0,
+                "content-version": "vor"
+            }
+        ],
+        "content-domain": {
+            "domain": [],
+            "crossmark-restriction": false
+        },
+        "short-container-title": [
+            "Phys. Rev. E"
+        ],
+        "DOI": "10.1103\/physreve.76.066702",
+        "type": "journal-article",
+        "created": {
+            "date-parts": [
+                [
+                    2007,
+                    12,
+                    6
+                ]
+            ],
+            "date-time": "2007-12-06T23:35:09Z",
+            "timestamp": 1196984109000
+        },
+        "source": "Crossref",
+        "is-referenced-by-count": 14,
+        "title": [
+            "Generator estimation of Markov jump processes based on incomplete observations nonequidistant in time"
+        ],
+        "prefix": "10.1103",
+        "volume": "76",
+        "author": [
+            {
+                "given": "Philipp",
+                "family": "Metzner",
+                "sequence": "first",
+                "affiliation": []
+            },
+            {
+                "given": "Illia",
+                "family": "Horenko",
+                "sequence": "additional",
+                "affiliation": []
+            },
+            {
+                "given": "Christof",
+                "family": "Sch\u00fctte",
+                "sequence": "additional",
+                "affiliation": []
+            }
+        ],
+        "member": "16",
+        "published-online": {
+            "date-parts": [
+                [
+                    2007,
+                    12,
+                    6
+                ]
+            ]
+        },
+        "reference": [
+            {
+                "key": "PhysRevE.76.066702Cc1R1",
+                "first-page": "419",
+                "volume": "23",
+                "author": "S. Asmussen",
+                "year": "1996",
+                "journal-title": "Scand. J. Stat.",
+                "ISSN": "http:\/\/id.crossref.org\/issn\/0303-6898",
+                "issn-type": "print"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc3R1",
+                "author": "U. Nodelman",
+                "year": "2005",
+                "volume-title": "Proceedings of the Twenty-first Conference on Uncertainty in AI (UAI)"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc4R1",
+                "DOI": "10.1016\/j.jcp.2006.01.045",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc5R1",
+                "DOI": "10.1111\/j.1467-9868.2005.00508.x",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc6R1",
+                "DOI": "10.1016\/j.jcp.2007.07.032",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc7R1",
+                "DOI": "10.1006\/jmbi.2002.5405",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc8R1",
+                "ISSN": "http:\/\/id.crossref.org\/issn\/1544-6115",
+                "issn-type": "print",
+                "author": "A. Hobolth",
+                "volume": "4",
+                "year": "2005",
+                "journal-title": "Stat. Appl. Genet. Mol. Biol.",
+                "DOI": "10.2202\/1544-6115.1127",
+                "doi-asserted-by": "crossref"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc9R1",
+                "DOI": "10.1063\/1.432526",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc10R1",
+                "DOI": "10.1063\/1.1649735",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc11R1",
+                "author": "J. Peinke",
+                "year": "2005",
+                "volume-title": "Progress in Turbulence",
+                "DOI": "10.1007\/b139035",
+                "doi-asserted-by": "crossref"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc12R1",
+                "DOI": "10.1063\/1.1828039",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc13R1",
+                "DOI": "10.1063\/1.2199530",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc14R1",
+                "author": "R. M. Yulmetyev",
+                "volume": "9",
+                "first-page": "313",
+                "year": "2006",
+                "journal-title": "Nonlinear Phenomena in Complex Systems"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc15R1",
+                "author": "Pierre Br\u00e9maud",
+                "year": "1999",
+                "volume-title": "Markov Chains: Gibbs Fields, Monte Carlo Simulation, and Queues"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc16R1",
+                "DOI": "10.1016\/0899-8248(89)90013-X",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc17R1",
+                "DOI": "10.1016\/0899-8248(92)90020-9",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc18R1",
+                "DOI": "10.1002\/mats.1996.040050303",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc19R1",
+                "DOI": "10.1093\/bioinformatics\/btg351",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc20R1",
+                "first-page": "8",
+                "volume": "19",
+                "author": "T. M\u00fcller",
+                "year": "2002",
+                "journal-title": "Mol. Biol. Evol.",
+                "ISSN": "http:\/\/id.crossref.org\/issn\/0737-4038",
+                "issn-type": "print"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc21R1",
+                "first-page": "1",
+                "volume": "39",
+                "author": "A. P. Dempster",
+                "year": "1977",
+                "journal-title": "J. R. Stat. Soc. Ser. A (Gen.)",
+                "ISSN": "http:\/\/id.crossref.org\/issn\/0035-9238",
+                "issn-type": "print"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc22R1",
+                "DOI": "10.1103\/PhysRevE.71.011902",
+                "doi-asserted-by": "publisher"
+            },
+            {
+                "key": "PhysRevE.76.066702Cc23R1",
+                "author": "P. Deuflhard",
+                "year": "2003",
+                "volume-title": "Numerical Analysis. A First Course in Scientific Computation"
+            }
+        ],
+        "container-title": [
+            "Physical Review E"
+        ],
+        "original-title": [],
+        "language": "en",
+        "link": [
+            {
+                "URL": "http:\/\/link.aps.org\/article\/10.1103\/PhysRevE.76.066702",
+                "content-type": "unspecified",
+                "content-version": "vor",
+                "intended-application": "syndication"
+            },
+            {
+                "URL": "http:\/\/harvest.aps.org\/v2\/journals\/articles\/10.1103\/PhysRevE.76.066702\/fulltext",
+                "content-type": "unspecified",
+                "content-version": "vor",
+                "intended-application": "similarity-checking"
+            }
+        ],
+        "deposited": {
+            "date-parts": [
+                [
+                    2017,
+                    6,
+                    18
+                ]
+            ],
+            "date-time": "2017-06-18T02:01:55Z",
+            "timestamp": 1497751315000
+        },
+        "score": 1.0,
+        "subtitle": [],
+        "short-title": [],
+        "issued": {
+            "date-parts": [
+                [
+                    2007,
+                    12,
+                    6
+                ]
+            ]
+        },
+        "references-count": 22,
+        "journal-issue": {
+            "published-print": {
+                "date-parts": [
+                    [
+                        2007,
+                        12
+                    ]
+                ]
+            },
+            "issue": "6"
+        },
+        "URL": "http:\/\/dx.doi.org\/10.1103\/physreve.76.066702",
+        "relation": {
+            "cites": []
+        },
+        "ISSN": [
+            "1539-3755",
+            "1550-2376"
+        ],
+        "issn-type": [
+            {
+                "value": "1539-3755",
+                "type": "print"
+            },
+            {
+                "value": "1550-2376",
+                "type": "electronic"
+            }
+        ],
+        "subject": [
+            "Statistics and Probability",
+            "Statistical and Nonlinear Physics",
+            "Condensed Matter Physics"
+        ],
+        "article-number": "066702"
+    }
+}

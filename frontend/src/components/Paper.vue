@@ -1,26 +1,34 @@
 <template>
   <div>
-  	<el-input v-model="paper.title" /><br>
-  	<el-input v-model="paper.year" /><br>
+  	Title <el-input v-model="mypaper.title" /><br>
+  	Year  <el-input v-model="mypaper.year" /><br>
+    DOI   <el-input v-model="mypaper.doi" /><br>
   	Authors:
-    <authorlist :authors="paper.authors" format=full :editable="true" />
+    <authorlist :authors="mypaper.authors" format=full :editable="true" />
   	Tags:
-    <taglist v-model="paper.usertags" :editable="true" />
-    <button @click="save()">Save</button><br>
-    <viewpdf :pid="paper.uuid"/>
+    <taglist v-model="mypaper.usertags" :editable="true" />
+    <button @click="$emit('save', mypaper)">Save</button><br>
+    <viewpdf :pid="mypaper.uuid"/>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
 import taglist from './TagList.vue'
 import authorlist from './AuthorList.vue'
-import viewpdf from './ViewPDF2.vue'
+import viewpdf from './ViewPDF.vue'
 
 export default {
   components: {
      taglist, authorlist, viewpdf
   },
+  data() { return {
+    mypaper: this.paper
+    }
+  },
+  watch: {
+    paper: function (p) {
+      this.mypaper = p}
+  },  
   filters: {
     parseAuthors: function(as) {
       if (as != null) {
@@ -34,11 +42,7 @@ export default {
   },
   props: ['paper'],
   methods: {
-    save: function() {
-      axios
-      .put('http://localhost:8000/editpaper',
-        JSON.stringify(this.paper))
-    }
+    
   }
 }
 </script>

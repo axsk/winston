@@ -26,10 +26,14 @@ function addCORS(res)
 end
 
 function addCORS(res::Dict)
-	for x in ["Origin", "Methods", "Headers"]
-		push!(res[:headers], "Access-Control-Allow-$x" => "*")
+	if haskey(res, :headers) 
+		for x in ["Origin", "Methods", "Headers"]
+			push!(res[:headers], "Access-Control-Allow-$x" => "*")
+		end
+		return res
+	else
+		@show res
 	end
-	res
 end
 
 global d
@@ -49,6 +53,7 @@ using Base64: stringmime
 	#page("/", req->getpapers() |> json |> addHeader),
 	page("/search", req->handleSearch(req)),
 	page("/paper/:id", req->handlePaper(req)),
+	page("/paper/add/doi", req->paperAddDoi(req)),
 	#page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
 	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json)),
 	page("/editpaper", req->editpaper(req)|>json),
@@ -74,19 +79,33 @@ using Base64: stringmime
 		)),
 	Mux.notfound())
 
+function paperAddDoi(req)
+	method = req[:method]
+	if method == "OPTIONS" 
+		return ""
+	elseif method == "GET"
+		doi = req[:query]["doi"]
+		p = WebCrawl.Crossref.search(doi)[1]
+		syncpaper(p, "Alex")
+	end
+end
+
 function handleSearch(req)
 	api_search(req[:jq]) |> json
 end
 
-
 function handlePaper(req)
 	method = req[:method]
-	if method == "GET"
+	if method == "OPTIONS"
+		"puthere"
+	elseif method == "GET"
 		loaduuid(convert(String, req[:params][:id])) |> json
 	elseif method == "POST"
-		req -> create(Paper()) |> json
+		p = create(Paper()) |> json
+		@show p
 	elseif method == "PUT"
-		req -> editpaper(req) |> json
+		@show req
+		editpaper(req) |> json
 	end
 end
 
@@ -113,7 +132,7 @@ function editpaper(req, user="Alex")
 		s = String(req[:data])
 		d = JSON.parse(s)
 		p = Paper(d)
-		syncpaper(p, user)
+		return syncpaper(p, user)
 	end
 	return ""
 end

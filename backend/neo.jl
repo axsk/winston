@@ -10,7 +10,9 @@ c = connect()
 ### ATOMIC GETS
 
 function loaduuid(uuid::String)::Paper
-	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})--(a:Author) return p, collect(a) as a", :uid => uuid)
+	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid}) OPTIONAL MATCH (p)--(a:Author) return p, collect(a) as a", :uid => uuid)
+	@show d
+	size(d, 1) == 0 && throw("UUID not found")
 	Paper(d[1,1], authors = d[1,2])
 end
 #=
@@ -37,6 +39,20 @@ end
 	 for rr in r.results[1]["data"]]
 	 end=#
 
+# get first and last modification (comment, highlight, tag) for specified paper and user
+function edittimes(p::Paper)
+	d = cypherQuery(c, raw"
+		MATCH (p:Paper {uuid: $id})--(x)--(u:User {name: 'Alex'}) 
+		WHERE x:Tagging OR x:Highlight OR x:Comment WITH x.created AS t ORDER BY t
+		RETURN apoc.agg.first(t), apoc.agg.last(t)",
+		:id => p.uuid)
+	try 
+		return Paper(p, editfirst=d[1,1], editlast=d[1,2])
+	catch
+		return p
+	end
+end
+
 function api_search(query::String, user::String, usertags::Vector)
 	query, user, usertags
 	tx = transaction(c)
@@ -56,6 +72,7 @@ function api_search(query::String, user::String, usertags::Vector)
 	results = map(r.results[1]["data"]) do r
 		r = r["row"]
 		p = Paper(r[1], authors=r[2], usertags=r[3])
+		p = edittimes(p)
 	end
 
 	if length(results) < 1 && usertags == []
@@ -178,10 +195,17 @@ end
 # UPDATES
 
 function syncpaper(p::Paper, user)
-	pid = p.uuid == nothing ? create(p).uuid : update(p).uuid
+	if isa(p.uuid, Int) || isnothing(p.uuid)
+		@show "creating new paper", p
+		pid = create(p).uuid
+	else
+		pid = update(p).uuid
+	end
+	#pid = p.uuid == nothing ? create(p).uuid : update(p).uuid
 	syncauthors(pid, p.authors)
 	synctags(pid, p.usertags, user)
 	#TODO: syncrefs, synccits
+	return pid
 end
 
 function syncauthors(pid, authors::Vector{Author})

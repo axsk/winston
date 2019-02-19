@@ -13,8 +13,7 @@ export default new Router({
     },
     {
       path: '/paper/:uuid',
-      component: Paper,
-      props: true
+      component: Paper
     },
     {
       path: '*',

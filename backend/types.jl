@@ -12,6 +12,7 @@ hasval(::Any) = true
     authors = nothing
     title = nothing
     doi = nothing
+    ssid = nothing
     link = nothing
     references = nothing
 	citations = nothing
@@ -20,14 +21,14 @@ hasval(::Any) = true
     editlast = nothing
     editfirst = nothing
     usertags = nothing
-    function Paper(uuid, year, authors, title, doi, link, references, citations, date, created, editlast, editfirst, usertags)
+    function Paper(uuid, year, authors, title, doi, ssid, link, references, citations, date, created, editlast, editfirst, usertags)
         authors = map(Author, authors)
         citations = map(Paper, citations)
         references = map(Paper, references)
         if created == nothing
             created = date
         end
-        new(uuid, year, authors, title, doi, link, references, citations, date, created, editlast, editfirst, usertags)
+        new(uuid, year, authors, title, doi, ssid, link, references, citations, date, created, editlast, editfirst, usertags)
     end
 end
 

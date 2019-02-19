@@ -32,6 +32,7 @@ function addCORS(res::Dict)
 		end
 		return res
 	else
+		warn("whats going on")
 		@show res
 	end
 end
@@ -62,7 +63,7 @@ using Base64: stringmime
 		if req[:method] == "OPTIONS"
 			""
 		else
-			@show pid = req[:params][:id]
+			pid = req[:params][:id]
 			pdf = req[:data]
 			savepdf(pid, pdf)
 			""
@@ -73,7 +74,6 @@ using Base64: stringmime
 		elseif req[:method] == "PUT"
 			mergehighlights(req)
 		elseif req[:method] == "GET"
-			@show req
 			gethighlights(req[:query])
 		end
 		)),
@@ -102,9 +102,7 @@ function handlePaper(req)
 		loaduuid(convert(String, req[:params][:id])) |> json
 	elseif method == "POST"
 		p = create(Paper()) |> json
-		@show p
 	elseif method == "PUT"
-		@show req
 		editpaper(req) |> json
 	end
 end

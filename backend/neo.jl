@@ -299,7 +299,7 @@ node(a::Author) = typedict(a)
 Base.convert(::Type{Author}, d::Dict) = Author(d)
 
 label(p::Paper) = ":Paper"
-node(p::Paper) = typedict(p, [:uuid, :year, :title, :doi, :link, :created])
+node(p::Paper) = typedict(p, [:uuid, :year, :ssid, :title, :doi, :link, :created])
 Base.convert(::Type{Paper}, d::Dict) = Paper(d)
 
 function create(n::Node)
@@ -313,6 +313,7 @@ end
 
 # note that += doesnt remove properties
 function update(n::Node)
+	@show "updating $n"
 	d = cypherQuery(c,
 		"MATCH (n$(label(n)) {uuid: \$n.uuid}) SET n+=\$n RETURN n",
 		:n => node(n))

@@ -30,7 +30,7 @@ export default new Vuex.Store({
     },
     newPaper ({commit}) {
       var tempid = -Math.floor(Math.random() * 1024);
-      var p = {title: "", uuid: tempid, authors: [], year: "", doi: ""}
+      var p = {title: "", uuid: tempid, authors: [], year: "", doi: "", ssid: ""}
       commit('addpaper', p)
       return tempid
     }

@@ -3,6 +3,7 @@
   	Title <el-input v-model="mypaper.title" /><br>
   	Year  <el-input v-model="mypaper.year" /><br>
     DOI   <el-input v-model="mypaper.doi" /><br>
+    SemanticScholar <el-input v-model="mypaper.ssid" /><br>
   	Authors:
     <authorlist :authors="mypaper.authors" format=full :editable="true" />
   	Tags:

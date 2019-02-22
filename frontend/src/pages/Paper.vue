@@ -14,7 +14,6 @@ export default {
   },
   computed: {
     paper() {
-      if (this.uuid == null) return null
       return this.$store.getters.getPaper(this.uuid)
     },
     mypaper() {

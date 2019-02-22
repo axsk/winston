@@ -7,16 +7,20 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   strict: true,
   state: {
-    papers: []
+    papers: {}
   },
   getters: {
     getPaper: (state) => (uuid) => {
-      return state.papers.find(p => p.uuid == uuid)
+      return state.papers[uuid]
+      // return state.papers.find(p => p.uuid == uuid)
     }
   },
   mutations: {
     addpaper (state, paper) {
-      state.papers.push(paper)
+      Vue.set(state.papers, paper.uuid, {...state.papers[paper.uuid], ...paper})
+    },
+    setReferences (state, {uuid, ps}) {
+      Vue.set(state.papers, uuid, {...state.papers[uuid], references: ps})
     }
   },
   actions: {
@@ -33,6 +37,11 @@ export default new Vuex.Store({
       var p = {title: "", uuid: tempid, authors: [], year: "", doi: "", ssid: ""}
       commit('addpaper', p)
       return tempid
+    },
+    async getReferences ({commit}, uuid) {
+      var ps = (await axios.get('http://localhost:8000/paper/'+uuid+'/references')).data
+      //ps.map(p=>commit('addpaper', p))
+      commit('setReferences', {uuid, ps})
     }
   }
 })

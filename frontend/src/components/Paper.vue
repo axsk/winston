@@ -10,6 +10,9 @@
     <taglist v-model="mypaper.usertags" :editable="true" />
     <button @click="$emit('save', mypaper)">Save</button><br>
     <viewpdf :pid="mypaper.uuid"/>
+    <div v-for="ref in mypaper.references" :key="ref.uuid">
+        <paperlabel :paper="ref"/>
+    </div>
   </div>
 </template>
 
@@ -17,10 +20,11 @@
 import taglist from './TagList.vue'
 import authorlist from './AuthorList.vue'
 import viewpdf from './ViewPDF.vue'
+import paperlabel from './PaperLabel'
 
 export default {
   components: {
-     taglist, authorlist, viewpdf
+     taglist, authorlist, viewpdf, paperlabel
   },
   data() { return {
     mypaper: this.paper
@@ -30,17 +34,6 @@ export default {
     paper: function (p) {
       this.mypaper = p}
   },  
-  filters: {
-    parseAuthors: function(as) {
-      if (as != null) {
-          return as.map(function(x){
-            return x.family
-          }).join(", ")
-        } else {
-          null
-        }
-    }
-  },
   props: ['paper'],
   methods: {
     

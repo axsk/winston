@@ -1,7 +1,7 @@
 <template>
 <div>
-    <h2><router-link :to='"/paper/"+paper.uuid'>{{paper.title}}</router-link></h2>
-    <p>{{paper.year}} - <authorlist :authors="paper.authors"/></p>
+    <h3><router-link :to='"/paper/"+paper.uuid'>{{paper.title}}</router-link></h3>
+    <div>{{paper.year}} - <authorlist :authors="paper.authors"/></div>
     <taglist :value="paper.usertags"/>
     <div v-if="haspdf">PDF</div>
 </div>

@@ -15,13 +15,11 @@ function loaduuid(uuid::String)::Paper
 	size(d, 1) == 0 && throw("UUID not found")
 	Paper(d[1,1], authors = d[1,2])
 end
-#=
-function loadrefs(p::Paper)::Paper
-	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})-[:referenced]->(r:Paper)--(a:Author) return r, collect(a) as a", :uid => p.uuid)
+
+function loadrefs(uuid)::Vector{Paper}
+	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})-[:referenced]->(r:Paper)--(a:Author) return r, collect(a) as a", :uid => uuid)
 	refs = [Paper(d[i,1], authors = d[i,2]) for i in 1:size(d,1)]
-	Paper(p, references = refs)
 end
-=#
 
 
 ### SEARCH

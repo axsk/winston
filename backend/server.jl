@@ -32,7 +32,7 @@ function addCORS(res::Dict)
 		end
 		return res
 	else
-		warn("whats going on")
+		println("whats going on")
 		@show res
 	end
 end
@@ -48,12 +48,15 @@ pdfresponse(data::Vector{UInt8}) = Dict(
 		"Content-Type" => "application/pdf"]),
 	:body => data)
 
+idhandler(f) = req->(f(convert(String, req[:params][:id])) |> json)
+
 
 using Base64: stringmime
 @app app = (Mux.defaults, Muxify,
 	#page("/", req->getpapers() |> json |> addHeader),
 	page("/search", req->handleSearch(req)),
 	page("/paper/:id", req->handlePaper(req)),
+	page("/paper/:id/references", idhandler(loadrefs)),
 	page("/paper/add/doi", req->paperAddDoi(req)),
 	#page("/paper/:id", req->(getpaper(req[:params][:id]) |> json |> addHeader)),
 	page("/usertags/:user", req->(getusertags(req[:params][:user]) |> json)),

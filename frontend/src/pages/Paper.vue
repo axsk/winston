@@ -25,18 +25,16 @@ export default {
     '$route': {
       immediate: true,
       handler (to, from) {
-        if (to.params.uuid == "new")
+        var uuid = to.params.uuid
+        if (uuid == "new")
           this.$store.dispatch('newPaper').then(id=>(this.uuid=id))
-        else
-          this.uuid = to.params.uuid
+        else {
+          this.$store.dispatch('getPaper', uuid)
+          this.$store.dispatch('getReferences', uuid)
+          this.uuid = uuid
+        }
       }
     },
-    uuid: {
-      immediate: true,
-      handler (uuid) {
-          uuid != null && this.$store.dispatch('getPaper', uuid)
-      }
-    }
   },
   methods: {
     save: async function(paper) {

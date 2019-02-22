@@ -93,3 +93,32 @@ end
 
 Base.show(p::Paper) = dump(p)#("$(p.year) - $(reduce(*, p.authors)) - $(p.title)")
 #Base.show(io::IO, p::Paper) = show(io, "$(p.year) - $(p.title)")
+
+
+Node = Union{Paper, Author}
+function typedict(x::T, fields=fieldnames(T)) where T 
+    Dict(f=>getfield(x, f) for f in fields) 
+end
+
+function typedictsparse(x::T) where T
+    d = Dict()
+    for k in fieldnames(T)
+        v = getfield(x, k)
+        v == nothing && continue
+        d[k] = v
+    end
+    d
+end
+
+JSON.lower(n::Node) = typedictsparse(n)
+
+
+selector(n::Node) = "$(label(n)) {uuid: $(n.uuid)}"
+
+label(a::Author) = ":Author"
+node(a::Author) = typedict(a)
+Base.convert(::Type{Author}, d::Dict) = Author(d)
+
+label(p::Paper) = ":Paper"
+node(p::Paper) = typedict(p, [:uuid, :year, :ssid, :title, :doi, :link, :created])
+Base.convert(::Type{Paper}, d::Dict) = Paper(d)

@@ -1,16 +1,18 @@
 <template>
 <el-container>
     <el-main :style="'position:relative; min-width:'+pagewidth">
-        <input v-model="zoom"/><br>
-        <div v-if="show" id='pageContainer' class="pdfViewer singlePageView" :pid="pid"></div>
+        <div v-if="boxShow" :style="{top: boxTop+'px', left: boxLeft+'px', position:'absolute', 'z-index':'1'}">
+            <el-button @click="highlight">Highlight</el-button>
+        </div>
+        Zoom <input v-model="zoom"/><br>
+        Highlights <el-button @click="loadData">load</el-button> <el-button @click="saveAll">save</el-button> <br>
+        <div v-if="show" id='pageContainer' class="pdfViewer singlePageView" :pid="pid" @mouseup="contextBox"></div>
         <upload v-else :pid="pid" />
+        
     </el-main>
-    <el-aside :style="'position:relative'">
-        <el-button @click="highlight">Highlight</el-button>
-        <el-button @click="loadData">load</el-button>
-        <el-button @click="saveAll">save</el-button>
+    <el-aside :style="'position:relative'">        
         <div v-for="note in notes" :style="{top: note.offset+'px', position:'absolute'}">
-            <el-input type="textarea" autosize size="tiny" placeholder="Comment" v-model="note.text"/> 
+            <el-input type="textarea" autosize size="tiny" placeholder="Please input" v-model="note.text"/> 
         </div>
     </el-aside> 
 </el-container>
@@ -42,7 +44,10 @@ export default {
             notes: [],
             highlights: [],
             pagewidth: 100,
-            pdfDocument: null
+            pdfDocument: null,
+            boxTop: 0,
+            boxLeft: 0,
+            boxShow: false
         }
     },
     watch: {
@@ -57,15 +62,25 @@ export default {
                 })
             }
         },
-        zoom: function (zoom) {
-            this.renderpdf(this.pdfDocument)
-        },
         pdfDocument: function(pdfDocument) {
             this.renderpdf(pdfDocument)
         }
         
     },
     methods: {
+        contextBox() {
+            var sel = window.getSelection()
+            var p = document.getElementById('pageContainer').parentElement.getClientRects()[0]
+            var c = window.getSelection().getRangeAt(0).getClientRects()[0]
+            console.log(sel)
+            if (sel.type == "Range") {
+                this.boxTop  = c.top - p.top - 40
+                this.boxLeft = c.left - p.left
+                this.boxShow = true
+            } else
+                this.boxShow = false
+            
+        },
         saveAll() {
             this.saveNotes()
             this.saveHighlights()

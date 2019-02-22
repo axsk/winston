@@ -11,6 +11,9 @@
 import authorlist from './AuthorList.vue'
 import taglist from './TagList.vue'
 export default {
+    data() { return {
+        haspdf: false
+    }},
     components: {authorlist, taglist},
     props: ['paper'],
 }

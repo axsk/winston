@@ -19,8 +19,8 @@
 
 <script>
 
-import pdfjs from "pdfjs-dist";
-import * as pdfviewer from "pdfjs-dist/web/pdf_viewer.js";
+import pdfjs from "pdfjs-dist/webpack";
+import * as pdfviewer from "pdfjs-dist/web/pdf_viewer.js"
 import "pdfjs-dist/web/pdf_viewer.css"
 import upload from './Upload.vue'
 import axios from 'axios'
@@ -54,7 +54,7 @@ export default {
             immediate: true,
             handler: function (pid) {
                 var loadingTask = pdfjs.getDocument('http://localhost:8000/pdf/'+ pid)
-                loadingTask.promise.then((pdfDocument) => {
+                loadingTask.then((pdfDocument) => {
                     this.show = true
                     this.pdfDocument = pdfDocument
                 }).catch(err => {
@@ -121,7 +121,6 @@ export default {
                 promises.push(this.renderpage(pdfDocument, page, div))
             }
             await Promise.all(promises)
-            console.log("pdf rendered")
         },
 
         async renderpage(pdf, page, div) {

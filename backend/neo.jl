@@ -18,18 +18,25 @@ end
 
 ### ATOMIC GETS
 
-function loaduuid(uuid::String)::Paper
-	#d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid}) OPTIONAL MATCH (p)--(a:Author) return p, collect(a) as a", :uid => uuid)
+function getPapers(ids::Vector{<:AbstractString})
 	d = query(raw"
-		MATCH (p:Paper {uuid:$uid}) 
-		OPTIONAL MATCH (p)--(a:Author),
-			(p)--(tt:Tagging)--(u:User {name: $user}), (tt)--(t:Tag) 
-		return p, collect(t.name) as tags, collect(a) as a",
-		:uid => uuid, :user => "Alex")
-	#size(d, 1) == 0 && throw("UUID not found")
-	res = d[1]
-	Paper(res[1], usertags = res[2], authors = res[3])
+	UNWIND $ids as id
+	MATCH (p:Paper {uuid:id}), (u:User {name: $user})
+	OPTIONAL MATCH 
+		(p)--(a:Author),
+		(p)--(tt:Tagging)--(u), (tt)--(t:Tag)
+		WITH p, collect(a) as authors, collect(t.name) as tags
+	OPTIONAL MATCH
+		(p)--(x)--(u) WHERE x:Tagging OR x:Highlight OR x:Comment 
+		WITH p, authors, tags, x.created as time ORDER BY time
+	RETURN apoc.agg.first(time), apoc.agg.last(time), p, tags, authors",
+	:ids => ids, :user => "Alex")
+	map(d) do res
+		Paper(res[3], usertags = res[4], authors = res[5], editfirst=res[1], editlast=res[2])
+	end
 end
+
+loaduuid(uuid::String)::Paper = getPapers([uuid])[1]
 
 function loadrefs(uuid)::Vector{Paper}
 	d = query(raw"

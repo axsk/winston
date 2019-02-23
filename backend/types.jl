@@ -104,7 +104,7 @@ function typedictsparse(x::T) where T
     d = Dict()
     for k in fieldnames(T)
         v = getfield(x, k)
-        v == nothing && continue
+        ismissing(v) || isnothing(v) && continue
         d[k] = v
     end
     d

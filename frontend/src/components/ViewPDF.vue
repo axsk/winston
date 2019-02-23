@@ -62,8 +62,11 @@ export default {
                 })
             }
         },
-        pdfDocument: function(pdfDocument) {
-            this.renderpdf(pdfDocument)
+        pdfDocument: function() {
+            this.renderpdf()
+        },
+        zoom: function() {
+            this.renderpdf()
         }
         
     },
@@ -105,32 +108,35 @@ export default {
                     this.noteRender()})
         },
 
-        renderpdf(pdfDocument) {
+        async renderpdf() {
+            var pdfDocument = this.pdfDocument
             var container = document.getElementById('pdfContainer')
             this.clearnode(container)
             // Document loaded, retrieving the page.
             var npages = pdfDocument.numPages 
+            var promises = []
             for(var page=1; page<=npages; page++) {
                 var div = document.createElement("div");
                 container.append(div)
-                this.renderpage(pdfDocument, page, div)
+                promises.push(this.renderpage(pdfDocument, page, div))
             }
+            await Promise.all(promises)
+            console.log("pdf rendered")
         },
 
-        renderpage(pdf, page, div) {
-            pdf.getPage(page).then((pdfPage) => {
-                var pdfPageView = new pdfviewer.PDFPageView({
-                    container: div,
-                    id: page,
-                    scale: this.zoom,
-                    defaultViewport: pdfPage.getViewport({ scale: this.zoom, }),
-                    textLayerFactory: new pdfviewer.DefaultTextLayerFactory(),
-                    annotationLayerFactory: new pdfviewer.DefaultAnnotationLayerFactory(),
-                    })
-                pdfPageView.setPdfPage(pdfPage)
-                pdfPageView.draw()
-                this.pagewidth = div.firstChild.style.width
-            })
+        async renderpage(pdf, page, div) {
+            var pdfPage = await pdf.getPage(page)
+            var pdfPageView = new pdfviewer.PDFPageView({
+                container: div,
+                id: page,
+                scale: this.zoom,
+                defaultViewport: pdfPage.getViewport({ scale: this.zoom, }),
+                textLayerFactory: new pdfviewer.DefaultTextLayerFactory(),
+                annotationLayerFactory: new pdfviewer.DefaultAnnotationLayerFactory(),
+                })
+            await pdfPageView.setPdfPage(pdfPage)
+            await pdfPageView.draw()
+            this.pagewidth = div.firstChild.style.width
         },
         clearnode: function (node) {
             var fc = node.firstChild;

@@ -7,18 +7,39 @@ end
 
 c = connect()
 
+function query(q, args...)
+	tx = transaction(c)
+	tx(q, args...)
+	global r = commit(tx)
+	map(r.results[1]["data"]) do row
+		row["row"]
+	end
+end
+
 ### ATOMIC GETS
 
 function loaduuid(uuid::String)::Paper
-	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid}) OPTIONAL MATCH (p)--(a:Author) return p, collect(a) as a", :uid => uuid)
-	@show d
-	size(d, 1) == 0 && throw("UUID not found")
-	Paper(d[1,1], authors = d[1,2])
+	#d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid}) OPTIONAL MATCH (p)--(a:Author) return p, collect(a) as a", :uid => uuid)
+	d = query(raw"
+		MATCH (p:Paper {uuid:$uid}) 
+		OPTIONAL MATCH (p)--(a:Author),
+			(p)--(tt:Tagging)--(u:User {name: $user}), (tt)--(t:Tag) 
+		return p, collect(t.name) as tags, collect(a) as a",
+		:uid => uuid, :user => "Alex")
+	#size(d, 1) == 0 && throw("UUID not found")
+	res = d[1]
+	Paper(res[1], usertags = res[2], authors = res[3])
 end
 
 function loadrefs(uuid)::Vector{Paper}
-	d = cypherQuery(c,"MATCH (p:Paper {uuid:\$uid})-[:referenced]->(r:Paper)--(a:Author) return r, collect(a) as a", :uid => uuid)
-	refs = [Paper(d[i,1], authors = d[i,2]) for i in 1:size(d,1)]
+	d = query(raw"
+	MATCH (p:Paper {uuid:$uid})-[:referenced]->(r:Paper)--(a:Author)
+	OPTIONAL MATCH (r)--(tt:Tagging)--(u:User {name: $user}), (tt)--(t:Tag) 
+	RETURN r, collect(t.name) as tags, collect(a) as a", :uid => uuid, :user => "Alex")
+	@show d
+	map(d) do res
+		Paper(res[1], usertags = res[2], authors = res[3])
+	end
 end
 
 

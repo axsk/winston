@@ -6,9 +6,8 @@
         </div>
         Zoom <input v-model="zoom"/><br>
         Highlights <el-button @click="loadData">load</el-button> <el-button @click="saveAll">save</el-button> <br>
-        <div v-if="show" id='pageContainer' class="pdfViewer singlePageView" :pid="pid" @mouseup="contextBox"></div>
+        <div v-if="show" id='pdfContainer' class="pdfViewer singlePageView" :pid="pid" @mouseup="contextBox"></div>
         <upload v-else :pid="pid" />
-        
     </el-main>
     <el-aside :style="'position:relative'">        
         <div v-for="note in notes" :style="{top: note.offset+'px', position:'absolute'}">
@@ -56,6 +55,7 @@ export default {
             handler: function (pid) {
                 var loadingTask = pdfjs.getDocument('http://localhost:8000/pdf/'+ pid)
                 loadingTask.promise.then((pdfDocument) => {
+                    this.show = true
                     this.pdfDocument = pdfDocument
                 }).catch(err => {
                     this.show = false
@@ -70,9 +70,8 @@ export default {
     methods: {
         contextBox() {
             var sel = window.getSelection()
-            var p = document.getElementById('pageContainer').parentElement.getClientRects()[0]
+            var p = document.getElementById('pdfContainer').parentElement.getClientRects()[0]
             var c = window.getSelection().getRangeAt(0).getClientRects()[0]
-            console.log(sel)
             if (sel.type == "Range") {
                 this.boxTop  = c.top - p.top - 40
                 this.boxLeft = c.left - p.left
@@ -107,8 +106,7 @@ export default {
         },
 
         renderpdf(pdfDocument) {
-            this.show = true
-            var container = document.getElementById('pageContainer')
+            var container = document.getElementById('pdfContainer')
             this.clearnode(container)
             // Document loaded, retrieving the page.
             var npages = pdfDocument.numPages 

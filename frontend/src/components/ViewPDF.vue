@@ -6,8 +6,9 @@
         </div>
         Zoom <input v-model="zoom"/><br>
         Highlights <el-button @click="loadData">load</el-button> <el-button @click="saveAll">save</el-button> <br>
-        <div v-if="show" id='pdfContainer' class="pdfViewer singlePageView" :pid="pid" @mouseup="contextBox"></div>
-        <upload v-else :pid="pid" />
+        <div ref="pdfContainer" class="pdfViewer singlePageView" @mouseup="contextBox">
+        </div>
+        <upload :pid="pid" />
     </el-main>
     <el-aside :style="'position:relative'">        
         <div v-for="note in notes" :style="{top: note.offset+'px', position:'absolute'}">
@@ -39,30 +40,31 @@ export default {
     data() {
         return {
             zoom: 1.2,
-            show: true,
             notes: [],
             highlights: [],
             pagewidth: 100,
             pdfDocument: null,
             boxTop: 0,
             boxLeft: 0,
-            boxShow: false
+            boxShow: false,
+            pages: [],
+            LinkService: new pdfviewer.PDFLinkService()
         }
     },
     watch: {
         pid: {
             immediate: true,
             handler: function (pid) {
-                var loadingTask = pdfjs.getDocument('http://localhost:8000/pdf/'+ pid)
+                var loadingTask = pdfjs.getDocument(
+                    {url: 'http://localhost:8000/pdf/'+ pid,
+                     docBaseUrl: 'http://localhost:8080/pdf'})
                 loadingTask.then((pdfDocument) => {
-                    this.show = true
                     this.pdfDocument = pdfDocument
-                }).catch(err => {
-                    this.show = false
-                })
+                }).catch(err => {  })
             }
         },
         pdfDocument: function() {
+            this.LinkService.setDocument(this.pdfDocument)
             this.renderpdf()
         },
         zoom: function() {
@@ -73,7 +75,7 @@ export default {
     methods: {
         contextBox() {
             var sel = window.getSelection()
-            var p = document.getElementById('pdfContainer').parentElement.getClientRects()[0]
+            var p = this.$refs["pdfContainer"].parentElement.getClientRects()[0]
             var c = window.getSelection().getRangeAt(0).getClientRects()[0]
             if (sel.type == "Range") {
                 this.boxTop  = c.top - p.top - 40
@@ -110,13 +112,14 @@ export default {
 
         async renderpdf() {
             var pdfDocument = this.pdfDocument
-            var container = document.getElementById('pdfContainer')
-            this.clearnode(container)
+            var container = this.$refs["pdfContainer"]
+            //this.clearnode(container)
             // Document loaded, retrieving the page.
             var npages = pdfDocument.numPages 
             var promises = []
             for(var page=1; page<=npages; page++) {
                 var div = document.createElement("div");
+                this.pages.push(div)
                 container.append(div)
                 promises.push(this.renderpage(pdfDocument, page, div))
             }
@@ -125,15 +128,32 @@ export default {
 
         async renderpage(pdf, page, div) {
             var pdfPage = await pdf.getPage(page)
+let linkService = this.LinkService
+            let x = {}
+            x.createAnnotationLayerBuilder = function (pageDiv, pdfPage, imageResourcesPath, renderInteractiveForms, l10n) 
+                {
+                    
+                    return new pdfviewer.AnnotationLayerBuilder(
+                        {pageDiv, pdfPage, imageResourcesPath, renderInteractiveForms, l10n, linkService})
+
+                }
+
+            
             var pdfPageView = new pdfviewer.PDFPageView({
                 container: div,
                 id: page,
                 scale: this.zoom,
                 defaultViewport: pdfPage.getViewport({ scale: this.zoom, }),
                 textLayerFactory: new pdfviewer.DefaultTextLayerFactory(),
-                annotationLayerFactory: new pdfviewer.DefaultAnnotationLayerFactory(),
+                //annotationLayerFactory: new pdfviewer.DefaultAnnotationLayerFactory(),
+                annotationLayerFactory: x
                 })
+
             await pdfPageView.setPdfPage(pdfPage)
+            
+
+            //pdfPageView.annotationLayer = new pdfviewer.AnnotationLayerBuilder({pageDiv: div, pdfPage: pdfPage, imageResourcesPath: '', renderInteractiveForms: false, linkService})
+
             await pdfPageView.draw()
             this.pagewidth = div.firstChild.style.width
         },

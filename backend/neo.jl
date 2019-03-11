@@ -23,20 +23,27 @@ function getPapers(ids::Vector{<:AbstractString})
 	UNWIND $ids as id
 	MATCH (p:Paper {uuid:id}), (u:User {name: $user})
 	OPTIONAL MATCH 
-		(p)--(a:Author),
+		(p)--(a:Author)
+	OPTIONAL MATCH
 		(p)--(tt:Tagging)--(u), (tt)--(t:Tag)
-		WITH p, collect(a) as authors, collect(t.name) as tags
 	OPTIONAL MATCH
 		(p)--(x)--(u) WHERE x:Tagging OR x:Highlight OR x:Comment 
-		WITH p, authors, tags, x.created as time ORDER BY time
-	RETURN apoc.agg.first(time), apoc.agg.last(time), p, tags, authors",
+	OPTIONAL MATCH
+		(p)--(f:File)
+	RETURN min(x.created), max(x.created), p, collect(distinct t.name), collect(distinct a), count(f)",
 	:ids => ids, :user => "Alex")
 	map(d) do res
-		Paper(res[3], usertags = res[4], authors = res[5], editfirst=res[1], editlast=res[2])
+		#return res
+		t = Paper(res[3], usertags = res[4], authors = res[5], editfirst=res[1], editlast=res[2])
+		#Dict("authors" => res[5])
+		t = typedictsparse(t)
+		t[:files]=res[6]
+		t
+		#Dict(tmin=>res[1], )
 	end
 end
 
-loaduuid(uuid::String)::Paper = getPapers([uuid])[1]
+loaduuid(uuid::String) = getPapers([uuid])[1]
 
 function loadrefs(uuid)::Vector{Paper}
 	d = query(raw"
@@ -47,6 +54,15 @@ function loadrefs(uuid)::Vector{Paper}
 	map(d) do res
 		Paper(res[1], usertags = res[2], authors = res[3])
 	end
+end
+
+function getauthor(id)
+	d = query(raw"
+		MATCH (a:Author {uuid:$id}) 
+		OPTIONAL MATCH (a)--(p:Paper)
+		RETURN a, collect(p.uuid)", 
+		:id => id)
+	Dict(d[1][1]..., "papers" => getPapers(Vector{String}(d[1][2])))
 end
 
 

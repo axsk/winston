@@ -55,6 +55,7 @@ using Base64: stringmime
 @app app = (Mux.defaults, Muxify,
 	#page("/", req->getpapers() |> json |> addHeader),
 	page("/search", req->handleSearch(req)),
+	page("/author/:id", idhandler(getauthor)),
 	page("/paper/:id", req->handlePaper(req)),
 	page("/paper/:id/references", idhandler(loadrefs)),
 	page("/paper/add/doi", req->paperAddDoi(req)),

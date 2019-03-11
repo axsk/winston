@@ -1,7 +1,7 @@
 <template>
 <span>
   <template v-for="author, i in authors">
-      <a @click.stop="clicked(author)" href=#>{{author | parseAuthor(format)}}</a>
+      <router-link :to="'/author/'+author.uuid">{{author | parseAuthor(format)}}</router-link>
       <button v-if="editable" @click="remove(i)">x</button>, 
   </template><br>
   <input v-if="editable" @keyup.enter="add" v-model="addition">

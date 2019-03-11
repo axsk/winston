@@ -6,20 +6,20 @@
       </el-aside>
     </div>
     <el-main>
-      <paper-table :papers="paperData"/>
+      <paperlist :papers="paperData"/>
     </el-main>
   </el-container>
 </template>
 
 <script>
 import Search from "../components/Search.vue";
-import PaperTable from "../components/PaperTable2.vue";
+import paperlist from "../components/PaperList.vue";
 
 export default {
   name: "app",
   components: {
     Search,
-    PaperTable
+    paperlist
   },
   data () { return {
     paperData: []

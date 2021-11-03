@@ -8,7 +8,8 @@ export default new Vuex.Store({
   strict: true,
   state: {
     papers: {},
-    authors: {}
+    authors: {},
+    notes: {},
   },
   getters: {
     getPaper: (state) => (uuid) => {
@@ -28,13 +29,21 @@ export default new Vuex.Store({
     },
     updateAuthor (state, {id, a}) {
       Vue.set(state.authors, id, {...state.authors[id], ...a})
+    },
+    addNote(state, {paper, notes}) {
+      notes.forEach(n => {
+        let id = n.uuid
+        Vue.set(state.notes, id, n)
+      })
+      Vue.set(state.papers, paper, {...state.papers[paper], notes: notes})
     }
   },
   actions: {
-    getPaper ({commit, getters}, uuid) {
+    getPaper ({commit, getters, dispatch}, uuid) {
       if (getters.getPaper(uuid) == undefined) {
         axios.get('http://localhost:8000/paper/'+uuid).then(p=>commit('addpaper', p.data))
       }
+      dispatch('getNotes', uuid)
     },
     async editPaper ({commit, getters}, paper) {
       return await axios.put('http://localhost:8000/editpaper', JSON.stringify(paper))
@@ -53,6 +62,12 @@ export default new Vuex.Store({
     async getAuthor ({commit}, id) {
       var a = (await axios.get('http://localhost:8000/author/'+id)).data
       commit('updateAuthor', {id, a})
+    },
+    async getNotes ({commit}, id) {
+        let d = (await axios.get('http://localhost:8000/comment', {params: {pid: id}})).data
+        let hl = d.highlights
+        let n = d.comments
+        commit('addNote', {paper: id, notes: n})
     }
   }
 })

@@ -2,10 +2,10 @@ Base.map(f, s::AbstractSet) = Set([f(s) for s in s])
 
 using Revise
 
-includet("types.jl")
+include("types.jl")
 
-includet("webcrawl.jl")
-includet("neo.jl")
+include("webcrawl.jl")
+include("neo.jl")
 
-includet("server.jl")
-includet("cermine.jl")
+include("server.jl")
+include("cermine.jl")

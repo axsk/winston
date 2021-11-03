@@ -6,7 +6,8 @@
         </div>
         Zoom <input v-model="zoom"/><br>
         Highlights <el-button @click="loadData">load</el-button> <el-button @click="saveAll">save</el-button> <br>
-        <div ref="pdfContainer" class="pdfViewer singlePageView" @mouseup="contextBox">
+        <div ref="pdfC" @mouseup="contextBox">
+            <div ref="pdfContainer" id="viewer" class="pdfViewer"></div>
         </div>
         <upload :pid="pid" />
     </el-main>
@@ -48,7 +49,7 @@ export default {
             boxLeft: 0,
             boxShow: false,
             pages: [],
-            LinkService: new pdfviewer.PDFLinkService()
+            LinkService: null,
         }
     },
     watch: {
@@ -64,8 +65,18 @@ export default {
             }
         },
         pdfDocument: function() {
-            this.LinkService.setDocument(this.pdfDocument)
-            this.renderpdf()
+            //this.LinkService.setDocument(this.pdfDocument)
+            //this.renderpdf()
+
+            var container = this.$refs["pdfC"]
+            var pdfLinkService = new pdfviewer.PDFLinkService();
+            this.LinkService = pdfLinkService
+            var pdfFindController = new pdfviewer.PDFFindController({linkService: pdfLinkService, });
+            var pdfViewer = new pdfviewer.PDFViewer({ container: container, linkService: pdfLinkService, findController: pdfFindController, });
+            pdfLinkService.setViewer(pdfViewer);
+            let pdfDocument = this.pdfDocument
+            pdfViewer.setDocument(pdfDocument);
+            pdfLinkService.setDocument(pdfDocument, null);
         },
         zoom: function() {
             this.renderpdf()
@@ -75,9 +86,9 @@ export default {
     methods: {
         contextBox() {
             var sel = window.getSelection()
-            var p = this.$refs["pdfContainer"].parentElement.getClientRects()[0]
-            var c = window.getSelection().getRangeAt(0).getClientRects()[0]
             if (sel.type == "Range") {
+                var p = this.$refs["pdfContainer"].parentElement.getClientRects()[0]
+                var c = sel.getRangeAt(0).getClientRects()[0]
                 this.boxTop  = c.top - p.top - 40
                 this.boxLeft = c.left - p.left
                 this.boxShow = true

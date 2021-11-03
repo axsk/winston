@@ -10,8 +10,10 @@
             <paperlabel :paper="ref"/>
         </div>
       </el-tab-pane>
-      <el-tab-pane label="Annotations">
-        todo
+      <el-tab-pane label="Notes">
+        <div v-for="note in mypaper.notes" :key="note.uuid">
+          {{note.text}}
+        </div>
       </el-tab-pane>
       <el-tab-pane label="Edit">
         Title <el-input v-model="mypaper.title" /><br>
